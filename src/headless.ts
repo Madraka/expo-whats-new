@@ -1,5 +1,3 @@
-export { default } from './ExpoWhatsNewModule';
-export { default as ExpoWhatsNew } from './ExpoWhatsNewModule';
 export { shouldShowWhatsNew } from './logic/shouldShowWhatsNew';
 export { resolveCurrentRelease } from './logic/releaseResolver';
 export { resolveFeatureAction } from './logic/resolveFeatureAction';
@@ -8,10 +6,11 @@ export { resolveReleaseSource } from './source/resolveReleaseSource';
 export { createDefaultStorage } from './storage/createDefaultStorage';
 export { createMemoryStorage } from './storage/memoryStorage';
 export { createNativeStorage } from './storage/nativeStorage';
-export { WhatsNewProvider } from './react/WhatsNewProvider';
-export { useWhatsNew } from './react/useWhatsNew';
-export { WhatsNewInline } from './react/WhatsNewInline';
-export { WhatsNewModal } from './react/WhatsNewModal';
-export { WhatsNewScreen } from './react/WhatsNewScreen';
-export { WhatsNewDoneButton } from './react/WhatsNewDoneButton';
-export * from './ExpoWhatsNew.types';
+export type {
+  DisplayPolicy,
+  ShouldShowWhatsNewOptions,
+  ShouldShowWhatsNewResult,
+  WhatsNewRelease,
+  WhatsNewReleaseSource,
+  WhatsNewStorageAdapter,
+} from './ExpoWhatsNew.types';

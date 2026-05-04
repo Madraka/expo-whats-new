@@ -1,3 +1,350 @@
 # expo-whats-new
 
-Universal Expo package for showing What's New releases
+Universal Expo package for showing typed "What's New" release notes in Expo and React Native apps.
+
+The package is JS-first and Expo Module compatible. It can run with a graceful JavaScript fallback in Expo Go, and it exposes a native capability layer for development builds and bare React Native apps.
+
+## Install
+
+```sh
+npm install expo-whats-new
+```
+
+## Usage
+
+```tsx
+import {
+  WhatsNewModal,
+  WhatsNewProvider,
+  type WhatsNewRelease,
+} from 'expo-whats-new';
+
+const releases: WhatsNewRelease[] = [
+  {
+    version: '1.2.0',
+    title: 'What is new in 1.2',
+    subtitle: 'A cleaner release experience for Expo apps.',
+    features: [
+      {
+        title: 'Smart release targeting',
+        description: 'Show release notes once per version with deterministic storage.',
+      },
+      {
+        title: 'Composable UI',
+        description: 'Use the provider, hook, modal, inline view, or headless logic.',
+      },
+    ],
+  },
+];
+
+export default function App() {
+  return (
+    <WhatsNewProvider releases={releases} autoShow>
+      <Root />
+      <WhatsNewModal />
+    </WhatsNewProvider>
+  );
+}
+```
+
+## Hook API
+
+```tsx
+import { useWhatsNew } from 'expo-whats-new';
+
+function SettingsScreen() {
+  const {
+    currentRelease,
+    error,
+    hasUnseenRelease,
+    refresh,
+    show,
+    status,
+    markSeen,
+    reset,
+  } = useWhatsNew();
+
+  // Render your own controls with the state above.
+}
+```
+
+## Remote Releases
+
+```tsx
+<WhatsNewProvider
+  source={{
+    type: 'remote',
+    url: 'https://cdn.example.com/whats-new.json',
+    cache: true,
+  }}
+  autoShow
+>
+  <Root />
+  <WhatsNewModal />
+</WhatsNewProvider>
+```
+
+Remote payloads can be either an array:
+
+```json
+[
+  {
+    "version": "1.2.0",
+    "title": "What is new",
+    "features": [{ "title": "New dashboard" }]
+  }
+]
+```
+
+or an object with a `releases` array:
+
+```json
+{
+  "releases": [
+    {
+      "version": "1.2.0",
+      "title": "What is new",
+      "features": [{ "title": "New dashboard" }]
+    }
+  ]
+}
+```
+
+## Expo Router Native Modal Routes
+
+The package does not depend on Expo Router. Keep navigation in your app and use `onAutoShow` to route an unseen release into a native-stack modal or sheet.
+
+```tsx
+import { Stack, router } from 'expo-router';
+import { WhatsNewProvider } from 'expo-whats-new';
+
+export default function Layout() {
+  return (
+    <WhatsNewProvider
+      releases={releases}
+      autoShow
+      onAutoShow={() => router.push('/whats-new')}
+    >
+      <Stack>
+        <Stack.Screen name="index" />
+        <Stack.Screen
+          name="whats-new"
+          options={{
+            presentation: 'modal',
+            title: "What's New",
+          }}
+        />
+      </Stack>
+    </WhatsNewProvider>
+  );
+}
+```
+
+```tsx
+// app/whats-new.tsx
+import { WhatsNewScreen } from 'expo-whats-new';
+import { router } from 'expo-router';
+
+export default function WhatsNewRoute() {
+  return <WhatsNewScreen onDone={() => router.back()} />;
+}
+```
+
+If `onAutoShow` is not provided, `autoShow` opens the package's own `WhatsNewModal`.
+
+For native toolbar buttons, put the action in the route header and hide the in-content button:
+
+```tsx
+// app/whats-new.tsx
+import { Stack, router } from 'expo-router';
+import { WhatsNewDoneButton, WhatsNewScreen } from 'expo-whats-new';
+
+export default function WhatsNewRoute() {
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: "What's New",
+          headerRight: () => <WhatsNewDoneButton onDone={() => router.back()} />,
+        }}
+      />
+      <WhatsNewScreen showDoneButton={false} />
+    </>
+  );
+}
+```
+
+For sheet-style presentation, configure the route in your app's stack:
+
+```tsx
+<Stack.Screen
+  name="whats-new"
+  options={{
+    presentation: 'formSheet',
+    title: "What's New",
+  }}
+/>
+```
+
+## Feature Actions
+
+Feature actions can open URLs automatically:
+
+```ts
+const releases = [
+  {
+    version: '1.2.0',
+    features: [
+      {
+        title: 'New docs',
+        action: {
+          label: 'Open docs',
+          url: 'https://docs.expo.dev',
+        },
+      },
+    ],
+  },
+];
+```
+
+For app navigation, provide `onActionPress` and keep routing in your app:
+
+```tsx
+<WhatsNewProvider
+  releases={releases}
+  onActionPress={(feature) => {
+    if (feature.action?.screen) {
+      router.push(feature.action.screen);
+    }
+  }}
+>
+  <Root />
+</WhatsNewProvider>
+```
+
+## Policy And Consent Events
+
+Use `kind: 'policy'` or `kind: 'consent'` for Apple-style continue screens, policy acknowledgements, and required user instructions. These releases are shown until the user accepts them.
+
+```ts
+const releases = [
+  {
+    kind: 'policy',
+    version: '2026.05.terms',
+    title: 'Updated Terms',
+    subtitle: 'Please review the latest terms before continuing.',
+    acknowledgement: {
+      mode: 'accepted',
+      required: true,
+      acceptLabel: 'Continue',
+    },
+    features: [
+      {
+        title: 'Terms and privacy updates',
+        description: 'We clarified account and data handling language.',
+      },
+    ],
+  },
+];
+```
+
+```tsx
+<WhatsNewProvider
+  releases={releases}
+  autoShow
+  onAccept={(release) => {
+    analytics.track('policy_accepted', { version: release.version });
+  }}
+>
+  <Root />
+  <WhatsNewModal />
+</WhatsNewProvider>
+```
+
+## Headless API
+
+```ts
+import { createMemoryStorage, shouldShowWhatsNew } from 'expo-whats-new/headless';
+
+const result = await shouldShowWhatsNew({
+  releases,
+  storage: createMemoryStorage(),
+  displayPolicy: 'once-per-release',
+});
+```
+
+## Native Capability
+
+```ts
+import { ExpoWhatsNew } from 'expo-whats-new';
+
+const appInfo = await ExpoWhatsNew.getAppInfo();
+```
+
+The native module exposes:
+
+- `getAppInfo()`
+- `getItemAsync(key)`
+- `setItemAsync(key, value)`
+- `removeItemAsync(key)`
+
+`getAppInfo()` returns:
+
+```ts
+type AppInfo = {
+  platform: 'ios' | 'android' | 'web';
+  version: string | null;
+  buildNumber: string | null;
+};
+```
+
+In Expo Go, custom native modules are not available unless they are included in the Expo Go binary. This package keeps the product logic in TypeScript and uses an optional native module, so the release-note layer can still run with fallback app info and memory storage.
+
+## Storage
+
+By default:
+
+- Web uses `localStorage` with a memory fallback.
+- Native development builds and bare apps use platform storage:
+  - iOS: `UserDefaults`
+  - Android: `SharedPreferences`
+- Expo Go falls back to in-memory storage when the custom native module is unavailable.
+
+To override persistence, pass your own adapter:
+
+```tsx
+<WhatsNewProvider releases={releases} storage={myStorageAdapter} autoShow>
+  <Root />
+  <WhatsNewModal />
+</WhatsNewProvider>
+```
+
+Adapter contract:
+
+```ts
+type WhatsNewStorageAdapter = {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
+};
+```
+
+## Development
+
+The example app uses this package as a local dependency:
+
+```json
+{
+  "dependencies": {
+    "expo-whats-new": "file:.."
+  }
+}
+```
+
+Metro and TypeScript are configured to point at the local source while developing.
+
+```sh
+npm run build
+npm run test -- --watch=false
+npm run lint
+```

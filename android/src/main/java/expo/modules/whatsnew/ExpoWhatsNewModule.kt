@@ -1,50 +1,51 @@
 package expo.modules.whatsnew
 
+import android.os.Build
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
 
 class ExpoWhatsNewModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  private val preferencesName = "expo-whats-new"
+
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoWhatsNew')` in JavaScript.
     Name("ExpoWhatsNew")
 
-    // Defines constant property on the module.
-    Constant("PI") {
-      Math.PI
-    }
-
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
-
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
-    }
-
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
-    }
-
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(ExpoWhatsNewView::class) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { view: ExpoWhatsNewView, url: URL ->
-        view.webView.loadUrl(url.toString())
+    AsyncFunction("getAppInfo") {
+      val context = appContext.reactContext ?: appContext.applicationContext
+      val packageName = context?.packageName
+      val packageInfo = packageName?.let {
+        context.packageManager.getPackageInfo(it, 0)
       }
-      // Defines an event that the view can send to JavaScript.
-      Events("onLoad")
+      val buildNumber = packageInfo?.let {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+          it.longVersionCode.toString()
+        } else {
+          @Suppress("DEPRECATION")
+          it.versionCode.toString()
+        }
+      }
+
+      mapOf(
+        "platform" to "android",
+        "version" to packageInfo?.versionName,
+        "buildNumber" to buildNumber
+      )
+    }
+
+    AsyncFunction("getItemAsync") { key: String ->
+      preferences().getString(key, null)
+    }
+
+    AsyncFunction("setItemAsync") { key: String, value: String ->
+      preferences().edit().putString(key, value).apply()
+    }
+
+    AsyncFunction("removeItemAsync") { key: String ->
+      preferences().edit().remove(key).apply()
     }
   }
+
+  private fun preferences() =
+    requireNotNull(appContext.reactContext ?: appContext.applicationContext)
+      .getSharedPreferences(preferencesName, 0)
 }

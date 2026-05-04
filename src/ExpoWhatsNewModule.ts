@@ -1,12 +1,39 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { NativeModule, requireOptionalNativeModule } from 'expo';
+import { Platform } from 'react-native';
 
-import { ExpoWhatsNewModuleEvents } from './ExpoWhatsNew.types';
+import type { AppInfo, NativeStorageCapabilities } from './ExpoWhatsNew.types';
+import { createMemoryStorage } from './storage/memoryStorage';
 
-declare class ExpoWhatsNewModule extends NativeModule<ExpoWhatsNewModuleEvents> {
-  PI: number;
-  hello(): string;
-  setValueAsync(value: string): Promise<void>;
+declare class ExpoWhatsNewNativeModule extends NativeModule implements NativeStorageCapabilities {
+  getAppInfo(): Promise<AppInfo>;
+  getItemAsync(key: string): Promise<string | null>;
+  setItemAsync(key: string, value: string): Promise<void>;
+  removeItemAsync(key: string): Promise<void>;
 }
 
-// This call loads the native module object from the JSI.
-export default requireNativeModule<ExpoWhatsNewModule>('ExpoWhatsNew');
+const nativeModule = requireOptionalNativeModule<ExpoWhatsNewNativeModule>('ExpoWhatsNew');
+const fallbackStorage = createMemoryStorage();
+
+const ExpoWhatsNewModule: Pick<
+  ExpoWhatsNewNativeModule,
+  'getAppInfo' | 'getItemAsync' | 'setItemAsync' | 'removeItemAsync'
+> = nativeModule ?? {
+  async getAppInfo() {
+    return {
+      platform: Platform.OS === 'android' ? 'android' : 'ios',
+      version: null,
+      buildNumber: null,
+    };
+  },
+  getItemAsync(key) {
+    return fallbackStorage.getItem(key);
+  },
+  setItemAsync(key, value) {
+    return fallbackStorage.setItem(key, value);
+  },
+  removeItemAsync(key) {
+    return fallbackStorage.removeItem(key);
+  },
+};
+
+export default ExpoWhatsNewModule;
