@@ -38,7 +38,7 @@
     "clean": "expo-module clean",
     "lint": "expo-module lint",
     "test": "expo-module test",
-    "prepare": "expo-module prepare",
+    "prepare": "bash scripts/prepare-module.sh",
     "verify": "npm run skills:validate && npm test -- --watch=false && npm run build && npm run lint && npm run example:typecheck",
     "doctor:example": "bash scripts/run-example-doctor.sh",
     "publish:check": "npm run verify && npm pack --dry-run",
