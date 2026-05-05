@@ -44,11 +44,10 @@ jobs:
 
       - name: Install example dependencies
         working-directory: example
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run Expo Doctor
-        working-directory: example
-        run: npx expo-doctor
+        run: npm run doctor:example
 
       - name: Configure git author
         run: |
