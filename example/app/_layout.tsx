@@ -49,11 +49,16 @@ function WhatsNewRuntime() {
         },
       }}
     >
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerBackTitle: 'Back',
+        }}
+      >
         <Stack.Screen
-          name="index"
+          name="(tabs)"
           options={{
-            title: 'expo-whats-new',
+            headerShown: false,
+            title: 'Home',
           }}
         />
         <Stack.Screen
@@ -71,7 +76,8 @@ function WhatsNewRuntime() {
         <Stack.Screen
           name="scenario/[id]"
           options={{
-            title: 'Scenario',
+            headerBackTitle: 'Gallery',
+            title: 'Example',
           }}
         />
       </Stack>
