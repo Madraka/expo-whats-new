@@ -1,6 +1,15 @@
 # expo-whats-new
 
+[![npm version](https://img.shields.io/npm/v/expo-whats-new.svg)](https://www.npmjs.com/package/expo-whats-new)
+[![npm downloads](https://img.shields.io/npm/dm/expo-whats-new.svg)](https://www.npmjs.com/package/expo-whats-new)
+[![CI](https://github.com/Madraka/expo-whats-new/actions/workflows/ci.yml/badge.svg)](https://github.com/Madraka/expo-whats-new/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/npm/l/expo-whats-new.svg)](./LICENSE)
+[![Expo](https://img.shields.io/badge/Expo-55-000020.svg?logo=expo)](https://docs.expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
 Typed What's New, release notes, required acknowledgement, and feature education flows for Expo and React Native apps.
+
+![expo-whats-new native sheet examples](./docs/image/IMG_6401.PNG)
 
 The package is JS-first and Expo Module compatible. It works with a JavaScript fallback in Expo Go and exposes native app-info/storage capabilities in development builds and bare React Native apps.
 
