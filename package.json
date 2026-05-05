@@ -1,6 +1,6 @@
 {
   "name": "expo-whats-new",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Universal Expo package for showing What's New releases",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -15,16 +15,39 @@
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "build",
+    "!build/**/*.test.*",
+    "src",
+    "!src/**/*.test.*",
+    "ios",
+    "android/src/main",
+    "android/build.gradle",
+    "expo-module.config.json",
+    "scripts/*.sh",
+    "skills",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "ARCHITECTURE.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",
     "lint": "expo-module lint",
     "test": "expo-module test",
     "prepare": "expo-module prepare",
-    "prepublishOnly": "expo-module prepublishOnly",
+    "verify": "npm run skills:validate && npm test -- --watch=false && npm run build && npm run lint && npm run example:typecheck",
+    "doctor:example": "bash scripts/run-example-doctor.sh",
+    "publish:check": "npm run verify && npm pack --dry-run",
+    "prepublishOnly": "npm run verify && expo-module prepublishOnly",
     "expo-module": "expo-module",
+    "release:prepare": "bash scripts/prepare-release.sh",
     "skills:install": "bash scripts/install-codex-skills.sh",
     "skills:validate": "bash scripts/validate-codex-skills.sh",
+    "example:typecheck": "cd example && npx tsc --noEmit",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android"
   },
@@ -34,7 +57,10 @@
     "expo-whats-new",
     "ExpoWhatsNew"
   ],
-  "repository": "https://github.com/Madraka/expo-whats-new",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Madraka/expo-whats-new.git"
+  },
   "bugs": {
     "url": "https://github.com/Madraka/expo-whats-new/issues"
   },

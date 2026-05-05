@@ -7,6 +7,20 @@ description: Use when adding or integrating expo-whats-new into an Expo or React
 
 Use this skill when integrating the package into an app that consumes `expo-whats-new`.
 
+## Install
+
+Prefer Expo CLI in Expo apps:
+
+```sh
+npx expo install expo-whats-new
+```
+
+Use direct npm install in non-Expo package manager flows or bare React Native projects:
+
+```sh
+npm install expo-whats-new
+```
+
 ## Fixed Boundaries
 
 - Core owns validation, targeting, acknowledgement, cache, locale fallback, and composable UI contracts.

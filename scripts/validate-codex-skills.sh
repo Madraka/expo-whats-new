@@ -36,9 +36,12 @@ for skill in "${required_skills[@]}"; do
   grep -Fq "\$$skill" "$metadata_file" || fail "default_prompt must mention \$$skill: $skill"
 done
 
-grep -q "CLAUDE.md" "$ROOT_DIR/README.md" || fail "README must mention Claude project memory"
-grep -q "npm run skills:install" "$ROOT_DIR/README.md" || fail "README must mention skills install"
+grep -q "docs/app-integration.md" "$ROOT_DIR/README.md" || fail "README must link app integration guide"
+if grep -Eq "CLAUDE.md|npm run skills:install|NPM_TOKEN|GitHub Actions" "$ROOT_DIR/README.md"; then
+  fail "README should stay app-facing and must not include maintainer, agent, or release operations"
+fi
 grep -q "npm run skills:install" "$SKILLS_DIR/README.md" || fail "skills README must mention install command"
+grep -q "CLAUDE.md" "$SKILLS_DIR/README.md" || fail "skills README must mention Claude project memory"
 grep -q "@AGENTS.md" "$ROOT_DIR/CLAUDE.md" || fail "CLAUDE.md must import AGENTS.md"
 
 bash -n "$ROOT_DIR/scripts/install-codex-skills.sh"

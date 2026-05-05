@@ -9,6 +9,7 @@ Use this file as the first repo-local context when changing this package.
 - Do not add Expo Router, Lottie, Rive, Supabase, SQLite, localization, analytics, or icon packages as core dependencies.
 - Remote JSON must stay serializable. Use descriptors such as `media.assetId`, `media.kind`, and `symbol`; never store React nodes, binary media, callbacks, or platform component instances in JSON.
 - Additive schema changes must update TypeScript types, the Zod remote schema, README, ARCHITECTURE, and focused tests.
+- Keep the root README concise. App integration details belong in `docs/app-integration.md`; package architecture and maintainer details belong in dedicated docs.
 
 ## Source And Data Rules
 
@@ -38,6 +39,24 @@ npm run build
 npm run lint
 (cd example && npx tsc --noEmit)
 ```
+
+Run Expo Doctor for example app dependency/config health when changing Expo, Expo Router, native config, example dependencies, or CI:
+
+```sh
+npm run doctor:example
+```
+
+If local root `node_modules` causes duplicate native dependency warnings, validate in CI or in a clean checkout where only `example/node_modules` is installed.
+
+Before npm release work, run locally:
+
+```sh
+npm run publish:check
+```
+
+Actual version bumps, tags, and npm publishes should go through `.github/workflows/release.yml`. Do not publish manually unless the user explicitly asks for an emergency release.
+Automated releases stay on the `0.1.x` line: use `patch` by default, or an exact `0.1.x` version only when the user explicitly asks.
+Use npm as the primary package registry. GitHub Releases should mirror tags and notes; do not publish to GitHub Packages unless the user explicitly changes the distribution strategy.
 
 If Metro is running for the example app, verify iOS bundling when route/example code changed:
 

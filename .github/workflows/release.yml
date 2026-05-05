@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Use patch for the next 0.1.x release, or provide an exact 0.1.x version"
+        required: true
+        default: patch
+      npm_tag:
+        description: "npm dist-tag"
+        required: true
+        default: latest
+      dry_run:
+        description: "Run all release steps without pushing tags or publishing"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Version, verify, and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install example dependencies
+        working-directory: example
+        run: npm ci
+
+      - name: Run Expo Doctor
+        working-directory: example
+        run: npx expo-doctor
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare version
+        run: scripts/prepare-release.sh "${{ inputs.version }}"
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify
+        run: npm run publish:check
+
+      - name: Ensure version is not already published
+        run: |
+          if npm view "expo-whats-new@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+            echo "expo-whats-new@${{ steps.version.outputs.version }} is already published" >&2
+            exit 1
+          fi
+
+      - name: Commit version
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git add package.json package-lock.json android/build.gradle
+          git commit -m "chore(release): v${{ steps.version.outputs.version }}"
+          git tag "${{ steps.version.outputs.tag }}"
+
+      - name: Publish dry run
+        if: ${{ inputs.dry_run }}
+        run: npm publish --access public --tag "${{ inputs.npm_tag }}" --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --access public --tag "${{ inputs.npm_tag }}" --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push release commit and tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git push origin HEAD
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: expo-whats-new ${{ steps.version.outputs.tag }}
+          body: |
+            Published `expo-whats-new@${{ steps.version.outputs.version }}` to npm.
+
+            Install in Expo apps:
+
+            ```sh
+            npx expo install expo-whats-new
+            ```
+
+            Direct npm install:
+
+            ```sh
+            npm install expo-whats-new@${{ steps.version.outputs.version }}
+            ```
+          generate_release_notes: true
