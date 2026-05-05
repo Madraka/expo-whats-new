@@ -24,6 +24,7 @@ export function WhatsNewProvider({
   locale,
   fallbackLocale,
   audience,
+  allowedUrlSchemes,
   onAutoShow,
   onActionPress: handleActionPress,
   onAccept,
@@ -93,7 +94,14 @@ export function WhatsNewProvider({
 
         if (autoShow && result.shouldShow && result.release) {
           if (onAutoShow) {
-            onAutoShow(result.release);
+            Promise.resolve(onAutoShow(result.release)).catch((autoShowError) => {
+              if (!mounted) {
+                return;
+              }
+
+              setError(autoShowError instanceof Error ? autoShowError : new Error('Failed to auto-show whats-new release.'));
+              setStatus('error');
+            });
           } else {
             setVisible(true);
           }
@@ -176,20 +184,25 @@ export function WhatsNewProvider({
         return;
       }
 
-      analytics?.onActionPress?.(feature, currentRelease);
+      try {
+        analytics?.onActionPress?.(feature, currentRelease);
 
-      const action = resolveFeatureAction(feature, currentRelease);
+        const action = resolveFeatureAction(feature, currentRelease, { allowedUrlSchemes });
 
-      if (action.type === 'url') {
-        await Linking.openURL(action.url);
-        return;
-      }
+        if (action.type === 'url') {
+          await Linking.openURL(action.url);
+          return;
+        }
 
-      if (action.type === 'custom') {
-        await handleActionPress?.(feature, currentRelease);
+        if (action.type === 'custom') {
+          await handleActionPress?.(feature, currentRelease);
+        }
+      } catch (actionError) {
+        setError(actionError instanceof Error ? actionError : new Error('Failed to handle whats-new action.'));
+        setStatus('error');
       }
     },
-    [analytics, currentRelease, handleActionPress]
+    [allowedUrlSchemes, analytics, currentRelease, handleActionPress]
   );
 
   const value = useMemo(

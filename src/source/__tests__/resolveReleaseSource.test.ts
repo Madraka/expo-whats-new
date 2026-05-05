@@ -1,5 +1,5 @@
-import { createMemoryStorage } from '../storage/memoryStorage';
-import { resolveReleaseSource } from './resolveReleaseSource';
+import { createMemoryStorage } from '../../storage/memoryStorage';
+import { resolveReleaseSource } from '../resolveReleaseSource';
 
 const releases = [
   {

@@ -35,8 +35,8 @@ npm install expo-whats-new
 4. Use remote JSON for serializable release data only. Keep React nodes, Lottie JSON imports, Rive instances, video components, callbacks, and navigation functions outside JSON.
 5. For Supabase, SQLite, filesystem, or another database, use `source: { type: 'custom', key, loader }`. The package should receive normalized release data, not own your database client.
 6. Use `cacheKey`, `timeoutMs`, and the package cache policy intentionally when loading remote or custom sources.
-7. Use `renderMedia` for app-owned media rendering. Map `media.kind` and `media.assetId` to Lottie, Rive, video, image, or custom components in the app.
-8. For icons, prefer app-owned `symbol` descriptors or `renderIcon`/content mapping. Do not expect core to bundle icon libraries.
+7. Use `renderMedia` for app-owned media rendering. Map `media.type` and `media.assetId` to Lottie, Rive, video, image, or custom components in the app.
+8. For icons, prefer app-owned `symbol` descriptors and map them to React nodes before passing local/static releases into core. Do not expect core to bundle icon libraries.
 9. Let automatic presentation happen only from the route where it is meaningful. Manual re-open can always route to the whats-new screen after acknowledgement.
 
 ## Recommended Patterns

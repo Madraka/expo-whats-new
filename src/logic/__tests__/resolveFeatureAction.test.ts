@@ -1,4 +1,4 @@
-import { resolveFeatureAction } from './resolveFeatureAction';
+import { resolveFeatureAction } from '../resolveFeatureAction';
 
 const release = {
   version: '1.0.0',
@@ -26,6 +26,40 @@ describe('resolveFeatureAction', () => {
     ).toEqual({
       type: 'url',
       url: 'https://example.com',
+    });
+  });
+
+  it('blocks urls with schemes that are not explicitly allowed', () => {
+    expect(
+      resolveFeatureAction(
+        {
+          title: 'Feature',
+          action: {
+            label: 'Open',
+            url: 'javascript:alert(1)',
+          },
+        },
+        release
+      )
+    ).toEqual({ type: 'none' });
+  });
+
+  it('allows host app schemes when configured', () => {
+    expect(
+      resolveFeatureAction(
+        {
+          title: 'Feature',
+          action: {
+            label: 'Open',
+            url: 'myapp://release/1',
+          },
+        },
+        release,
+        { allowedUrlSchemes: ['myapp'] }
+      )
+    ).toEqual({
+      type: 'url',
+      url: 'myapp://release/1',
     });
   });
 

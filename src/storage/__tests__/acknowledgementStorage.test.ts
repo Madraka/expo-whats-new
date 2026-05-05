@@ -1,9 +1,9 @@
-import { createMemoryStorage } from './memoryStorage';
+import { createMemoryStorage } from '../memoryStorage';
 import {
   isReleaseAcknowledged,
   parseStoredAcknowledgement,
   setReleaseAcknowledgement,
-} from './acknowledgementStorage';
+} from '../acknowledgementStorage';
 
 describe('acknowledgementStorage', () => {
   it('stores release id alongside version for stable acknowledgement identity', async () => {
@@ -88,6 +88,27 @@ describe('acknowledgementStorage', () => {
           updatedAt: '2026-05-05T00:00:00.000Z',
         }
       )
+    ).toBe(true);
+  });
+
+  it('migrates old single acknowledgement entries without losing them', async () => {
+    const storage = createMemoryStorage({
+      'test:key': JSON.stringify({
+        version: '1.0.0',
+        status: 'seen',
+        updatedAt: '2026-05-05T00:00:00.000Z',
+      }),
+    });
+
+    await setReleaseAcknowledgement(storage, 'test:key', { version: '1.1.0', features: [{ title: 'New' }] }, 'seen');
+
+    const stored = parseStoredAcknowledgement(await storage.getItem('test:key'));
+
+    expect(
+      isReleaseAcknowledged({ version: '1.0.0', features: [{ title: 'Old' }] }, stored)
+    ).toBe(true);
+    expect(
+      isReleaseAcknowledged({ version: '1.1.0', features: [{ title: 'New' }] }, stored)
     ).toBe(true);
   });
 });

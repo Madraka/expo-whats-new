@@ -201,6 +201,7 @@ export type WhatsNewProviderProps = {
   locale?: string;
   fallbackLocale?: string;
   audience?: string | string[];
+  allowedUrlSchemes?: string[];
   onAutoShow?: WhatsNewAutoShowHandler;
   onActionPress?: WhatsNewActionHandler;
   onAccept?: WhatsNewDecisionHandler;

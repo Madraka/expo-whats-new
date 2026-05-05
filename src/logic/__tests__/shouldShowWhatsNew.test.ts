@@ -1,5 +1,5 @@
-import { createMemoryStorage } from '../storage/memoryStorage';
-import { shouldShowWhatsNew } from './shouldShowWhatsNew';
+import { createMemoryStorage } from '../../storage/memoryStorage';
+import { shouldShowWhatsNew } from '../shouldShowWhatsNew';
 
 const releases = [
   {

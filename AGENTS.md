@@ -7,7 +7,7 @@ Use this file as the first repo-local context when changing this package.
 - Core owns release validation, release targeting, acknowledgement state, source resolution, cache envelopes, locale fallback, and composable presentation contracts.
 - Host apps own navigation, native sheet route placement, locale discovery, icons, media renderers, analytics, auth, audiences, and Supabase/SQLite clients.
 - Do not add Expo Router, Lottie, Rive, Supabase, SQLite, localization, analytics, or icon packages as core dependencies.
-- Remote JSON must stay serializable. Use descriptors such as `media.assetId`, `media.kind`, and `symbol`; never store React nodes, binary media, callbacks, or platform component instances in JSON.
+- Remote JSON must stay serializable. Use descriptors such as `media.assetId`, `media.type`, and `symbol`; never store React nodes, binary media, callbacks, or platform component instances in JSON.
 - Additive schema changes must update TypeScript types, the Zod remote schema, README, ARCHITECTURE, and focused tests.
 - Keep the root README concise. App integration details belong in `docs/app-integration.md`; package architecture and maintainer details belong in dedicated docs.
 
@@ -35,6 +35,8 @@ Run the smallest relevant set, and use the full set for behavior/schema/example 
 
 ```sh
 npm test -- --watch=false
+npm run test:core
+npm run test:react
 npm run build
 npm run lint
 (cd example && npx tsc --noEmit)

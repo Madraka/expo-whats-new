@@ -1,6 +1,7 @@
 export { shouldShowWhatsNew } from './logic/shouldShowWhatsNew';
 export { resolveCurrentRelease } from './logic/releaseResolver';
 export { resolveFeatureAction } from './logic/resolveFeatureAction';
+export type { ResolveFeatureActionOptions, ResolvedFeatureAction } from './logic/resolveFeatureAction';
 export { compareVersions } from './logic/versionComparator';
 export { resolveReleaseSource } from './source/resolveReleaseSource';
 export { createDefaultStorage } from './storage/createDefaultStorage';

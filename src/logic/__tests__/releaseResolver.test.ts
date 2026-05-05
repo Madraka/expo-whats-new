@@ -1,4 +1,4 @@
-import { resolveCurrentRelease } from './releaseResolver';
+import { resolveCurrentRelease } from '../releaseResolver';
 
 describe('resolveCurrentRelease', () => {
   it('returns the newest release matching platform and audience', () => {
@@ -11,6 +11,20 @@ describe('resolveCurrentRelease', () => {
       {
         platform: 'ios',
         audience: 'stable',
+      }
+    );
+
+    expect(release?.version).toBe('1.0.0');
+  });
+
+  it('does not match audience-targeted releases when no host audience is provided', () => {
+    const release = resolveCurrentRelease(
+      [
+        { version: '1.0.0', features: [{ title: 'Stable' }] },
+        { version: '1.1.0', audience: ['beta'], features: [{ title: 'Beta only' }] },
+      ],
+      {
+        platform: 'ios',
       }
     );
 

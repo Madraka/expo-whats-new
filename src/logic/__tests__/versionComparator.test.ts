@@ -1,4 +1,4 @@
-import { compareVersions } from './versionComparator';
+import { compareVersions } from '../versionComparator';
 
 describe('compareVersions', () => {
   it('sorts semantic versions by numeric segments', () => {

@@ -51,6 +51,8 @@ Use the full set for behavior, schema, source, UI, docs, or example changes:
 
 ```sh
 npm test -- --watch=false
+npm run test:core
+npm run test:react
 npm run build
 npm run lint
 (cd example && npx tsc --noEmit)

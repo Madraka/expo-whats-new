@@ -184,9 +184,9 @@ const locale = getLocales()[0]?.languageTag ?? 'en-US';
 </WhatsNewProvider>
 ```
 
-Locale matching normalizes tags and falls back by language, so `tr-TR` can match a `tr` localization. The provider reads native app version and platform when the Expo module is available; web, Expo Go, SSR-like shells, and custom version systems can pass `appVersion` and `platform` explicitly.
+Locale matching normalizes tags and falls back by language, so `tr-TR` can match a `tr` localization. The provider reads native app version and platform when the Expo module is available; web, Expo Go, SSR-like shells, and custom version systems can pass `appVersion` and `platform` explicitly. Web apps should pass `appVersion` when using `minAppVersion` or `maxAppVersion`, because browsers do not expose a native bundle version.
 
-Remote cache entries are stored with metadata (`schemaVersion`, `fetchedAt`, `expiresAt`, `releases`) and older array-only cache entries remain readable. The default remote policy is `network-first`: fetch fresh data and fall back to cache on failure. Use `requestPolicy: 'cache-first'` with `cacheTtlMs` to return fresh cached content before hitting the network; expired cache refreshes from the network and still acts as a stale offline fallback. If one URL returns different payloads for different headers or audiences, provide a stable `cacheKey`.
+Remote cache entries are stored with metadata (`schemaVersion`, `fetchedAt`, `expiresAt`, `releases`) and older array-only cache entries remain readable. The default remote policy is `network-first`: fetch fresh data and fall back to cache on failure. Use `requestPolicy: 'cache-first'` with `cacheTtlMs` to return fresh cached content before hitting the network; expired cache refreshes from the network and still acts as a stale offline fallback. If one URL returns different payloads for different headers, locales, audiences, auth state, tenants, or companies, provide a stable `cacheKey` that includes that app-owned partition. Do not rely on query tokens as cache identity.
 
 ## Supabase, SQLite, And Custom Sources
 
@@ -406,6 +406,14 @@ const releases = [
 ];
 ```
 
+URL actions are scheme-guarded before they reach React Native `Linking`. The default allowed schemes are `https`, `http`, `mailto`, and `tel`. For app-owned deep links, pass the scheme explicitly:
+
+```tsx
+<WhatsNewProvider releases={releases} allowedUrlSchemes={['https', 'myapp']}>
+  <Root />
+</WhatsNewProvider>
+```
+
 For app navigation, provide `onActionPress` and keep routing in your app:
 
 ```tsx
@@ -503,7 +511,7 @@ In Expo Go, custom native modules are not available unless they are included in 
 
 By default:
 
-- Web uses `localStorage` with a memory fallback.
+- Web uses `localStorage` with a memory fallback. If `localStorage` is unavailable, blocked, sandboxed, over quota, or throws during access, the adapter falls back to memory storage instead of breaking the release flow.
 - Native development builds and bare apps use platform storage:
   - iOS: `UserDefaults`
   - Android: `SharedPreferences`

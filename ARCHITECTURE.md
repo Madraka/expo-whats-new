@@ -36,31 +36,34 @@ The package does not own:
 src/
   index.ts
   headless.ts
-  types.ts
-  native/
-    ExpoWhatsNewModule.ts
+  ExpoWhatsNew.types.ts
+  ExpoWhatsNewModule.ts
+  ExpoWhatsNewModule.web.ts
   logic/
     releaseResolver.ts
+    resolveFeatureAction.ts
     shouldShowWhatsNew.ts
-    versionComparator.ts
     targeting.ts
+    versionComparator.ts
   storage/
-    StorageAdapter.ts
+    acknowledgementStorage.ts
     createDefaultStorage.ts
     memoryStorage.ts
+    nativeStorage.ts
     webStorage.ts
   react/
-    WhatsNewProvider.tsx
-    useWhatsNew.ts
-    WhatsNewModal.tsx
-    WhatsNewScreen.tsx
+    WhatsNewContext.ts
+    WhatsNewDoneButton.tsx
     WhatsNewInline.tsx
+    WhatsNewModal.tsx
+    WhatsNewProvider.tsx
+    WhatsNewScreen.tsx
+    useWhatsNew.ts
   theme/
     defaultTheme.ts
     resolveTheme.ts
-  analytics/
-    AnalyticsAdapter.ts
   source/
+    remoteReleaseSchema.ts
     resolveReleaseSource.ts
 ```
 
@@ -168,7 +171,7 @@ export interface WhatsNewStorageAdapter {
 
 Default behavior:
 
-- Web: `localStorage`, with memory fallback
+- Web: `localStorage`, with memory fallback when browser storage is unavailable or throws
 - iOS development builds / bare: `UserDefaults`
 - Android development builds / bare: `SharedPreferences`
 - Expo Go: memory fallback when the custom native module is unavailable
@@ -185,7 +188,7 @@ type RemoteCacheEnvelope = {
 };
 ```
 
-Older array-only cache entries are still readable. When a remote URL returns different release JSON by locale, audience, or authorization headers, the host app should provide `source.cacheKey` so cached payloads cannot cross streams.
+Older array-only cache entries are still readable. When a remote URL returns different release JSON by locale, audience, authorization headers, auth state, tenant, or company, the host app should provide `source.cacheKey` so cached payloads cannot cross streams. Query tokens should not be treated as a stable cache identity.
 
 Remote sources default to `network-first`: fetch the latest payload and fall back to cache if the request or validation fails. `requestPolicy: 'cache-first'` uses fresh cache before network, treats expired cache as refreshable, and still allows stale cache as an offline fallback.
 
@@ -197,10 +200,14 @@ Not every source is HTTP. `WhatsNewReleaseSource` also supports `type: 'custom'`
 export type WhatsNewRelease = {
   version: string;
   id?: string;
+  kind?: WhatsNewReleaseKind;
   title?: string;
   subtitle?: string;
   date?: string;
+  presentation?: WhatsNewPresentation;
   features: WhatsNewFeature[];
+  steps?: WhatsNewGuideStep[];
+  acknowledgement?: WhatsNewAcknowledgement;
   minAppVersion?: string;
   maxAppVersion?: string;
   platform?: PlatformTarget[];
@@ -217,26 +224,27 @@ The provider reads native app version and platform through the Expo module when 
 
 Guide presentations use `presentation: 'guide'`, `steps`, media descriptors, and the `renderMedia` slot. The core package does not depend on Lottie, Rive, video, or icon libraries. Remote JSON carries stable media metadata such as `assetId`; host apps map those descriptors to trusted renderers and reduced-motion fallbacks.
 
+Feature URL actions are guarded by allowed URL schemes before they reach React Native `Linking`. The default list covers `https`, `http`, `mailto`, and `tel`; host apps that need app-owned deep links pass `allowedUrlSchemes` or handle navigation through `onActionPress`.
+
 ## Delivery Phases
 
 ### v0.1 Core
 
-- Replace scaffold demo API with package API
-- Add typed release schema
-- Add storage adapter contract
-- Add native storage through UserDefaults and SharedPreferences
-- Add release resolver and display policy logic
-- Add Provider, hook, and modal
-- Add focused unit tests
-- Update example app to demonstrate first-launch and reset flows
+- Typed release schema, remote schema validation, and cache envelopes
+- Static, remote, and custom release sources
+- Locale, platform, app-version, and fail-closed audience targeting
+- Acknowledgement storage with version-only migration compatibility
+- Provider, hook, modal, screen, inline, event-sheet, guide, and headless APIs
+- URL scheme guarding for feature actions
+- Native storage through UserDefaults and SharedPreferences, web storage with resilient memory fallback
+- Focused logic/source/storage/react unit tests and an Expo Doctor-clean example app
 
 ### v0.2 Product
 
-- Add fullscreen and inline variants
-- Add analytics callbacks
-- Add platform and locale targeting
-- Add remote JSON source support
-- Add cache behavior for remote releases
+- Broaden example app scenarios and interactive guide showcases
+- Add higher-level docs and API reference tables
+- Add package size/API surface checks
+- Add optional end-to-end example app smoke tests
 
 ### v1.0 Package Quality
 

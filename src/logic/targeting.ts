@@ -3,8 +3,12 @@ import { matchesLocale } from './locale';
 import { compareVersions } from './versionComparator';
 
 function includesTarget(value: string | string[] | undefined, target: string | string[] | undefined) {
-  if (!value || !target) {
+  if (!value) {
     return true;
+  }
+
+  if (!target) {
+    return false;
   }
 
   const values = Array.isArray(value) ? value : [value];

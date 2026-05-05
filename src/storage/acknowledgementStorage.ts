@@ -81,6 +81,21 @@ function getStoredReleaseAcknowledgement(release: WhatsNewRelease, stored: Store
   return stored;
 }
 
+function createAcknowledgementMap(storedState: StoredAcknowledgementState | null) {
+  if ('releases' in (storedState ?? {})) {
+    return { ...(storedState as StoredAcknowledgementMap).releases };
+  }
+
+  if (storedState) {
+    return {
+      [(storedState as StoredAcknowledgement).releaseId ?? (storedState as StoredAcknowledgement).version]:
+        storedState as StoredAcknowledgement,
+    };
+  }
+
+  return {};
+}
+
 export function isReleaseAcknowledged(release: WhatsNewRelease, stored: StoredAcknowledgementState | null) {
   const storedRelease = getStoredReleaseAcknowledgement(release, stored);
 
@@ -102,7 +117,7 @@ export async function setReleaseAcknowledgement(
   status: WhatsNewAcknowledgementStatus
 ) {
   const storedState = parseStoredAcknowledgement(await storage.getItem(storageKey));
-  const releases = 'releases' in (storedState ?? {}) ? { ...(storedState as StoredAcknowledgementMap).releases } : {};
+  const releases = createAcknowledgementMap(storedState);
   const releaseIdentity = getReleaseIdentity(release);
 
   releases[releaseIdentity] = {

@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.1.2
+
+### Changed
+
+- Hardened release targeting so audience-specific releases do not match unless the host app provides a matching audience.
+- Added URL scheme guarding for feature actions, with `allowedUrlSchemes` for app-owned deep links.
+- Improved acknowledgement migration so older single-release entries are preserved when writing the newer map format.
+- Made web storage resilient to blocked, sandboxed, quota-limited, or throwing `localStorage` environments by falling back to memory storage.
+- Surfaced async `onAutoShow` and action handling failures through provider error state instead of leaving unhandled promise failures.
+- Added React Provider/hook behavior tests and domain-oriented `__tests__` folders for logic, source, storage, and react tests.
+- Updated example dependency health, test scripts, docs, and package audit overrides.
+
+### Notes
+
+- This is the recommended stable `0.1.x` baseline for early adopters.
+- Audience targeting is now fail-closed by design. Apps using audience-specific releases must pass `audience` to `WhatsNewProvider` or headless APIs.
+
+## 0.1.1
+
+### Changed
+
+- Added package release automation, publish checks, and CI-friendly preparation behavior.
+- Added npm README badges and package preview image.
+- Split app integration, architecture, release, and agent-skill guidance into dedicated docs.
+- Added Expo Doctor validation for the example app.
+
 ## 0.1.0
 
 Initial public release preparation.
