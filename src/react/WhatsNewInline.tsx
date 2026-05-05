@@ -1,11 +1,25 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import type { WhatsNewContentProps, WhatsNewContentVariant, WhatsNewFeature } from '../ExpoWhatsNew.types';
+import type {
+  WhatsNewContentProps,
+  WhatsNewContentVariant,
+  WhatsNewFeature,
+  WhatsNewGuideStep,
+  WhatsNewMediaDescriptor,
+  WhatsNewRelease,
+} from '../ExpoWhatsNew.types';
 import { getAcceptLabel, getAcknowledgementMode } from '../storage/acknowledgementStorage';
 import { useWhatsNew } from './useWhatsNew';
 
-export function WhatsNewInline({ doneLabel = 'Done', onDone, showDoneButton = true, variant = 'card' }: WhatsNewContentProps = {}) {
+export function WhatsNewInline({
+  doneLabel = 'Done',
+  onDone,
+  renderMedia,
+  showDoneButton = true,
+  variant = 'card',
+}: WhatsNewContentProps = {}) {
   const { accept, currentRelease, decline, markSeen, onActionPress, theme } = useWhatsNew();
+  const { width } = useWindowDimensions();
 
   if (!currentRelease) {
     return null;
@@ -13,6 +27,9 @@ export function WhatsNewInline({ doneLabel = 'Done', onDone, showDoneButton = tr
 
   const release = currentRelease;
   const isEventSheet = variant === 'event-sheet';
+  const presentation = release.presentation ?? 'list';
+  const guideSteps = release.steps?.length ? release.steps : release.features;
+  const guidePageWidth = isEventSheet ? width : Math.min(width - 40, 560);
 
   async function handleDone() {
     if (getAcknowledgementMode(release) === 'accepted') {
@@ -42,22 +59,48 @@ export function WhatsNewInline({ doneLabel = 'Done', onDone, showDoneButton = tr
         ) : null}
       </View>
 
-      <ScrollView
-        style={[styles.features, isEventSheet ? styles.eventFeatures : null]}
-        contentContainerStyle={[styles.featuresContent, isEventSheet ? styles.eventFeaturesContent : null]}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        {release.features.map((feature, index) => (
-          <FeatureRow
-            key={`${release.version}-${feature.title}-${index}`}
-            feature={feature}
-            variant={variant}
-            onActionPress={() => {
-              void onActionPress(feature);
-            }}
-          />
-        ))}
-      </ScrollView>
+      {presentation === 'guide' ? (
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          style={[styles.features, isEventSheet ? styles.eventFeatures : null]}
+          contentContainerStyle={[styles.guideContent, isEventSheet ? styles.eventGuideContent : null]}
+          contentInsetAdjustmentBehavior="automatic"
+        >
+          {guideSteps.map((step, index) => (
+            <GuideStep
+              key={`${release.version}-${step.title}-${index}`}
+              index={index}
+              release={release}
+              renderMedia={renderMedia}
+              pageWidth={guidePageWidth}
+              step={step}
+              total={guideSteps.length}
+            />
+          ))}
+        </ScrollView>
+      ) : (
+        <ScrollView
+          style={[styles.features, isEventSheet ? styles.eventFeatures : null]}
+          contentContainerStyle={[styles.featuresContent, isEventSheet ? styles.eventFeaturesContent : null]}
+          contentInsetAdjustmentBehavior="automatic"
+        >
+          {release.features.map((feature, index) => (
+            <FeatureRow
+              key={`${release.version}-${feature.title}-${index}`}
+              feature={feature}
+              index={index}
+              release={release}
+              renderMedia={renderMedia}
+              variant={variant}
+              onActionPress={() => {
+                void onActionPress(feature);
+              }}
+            />
+          ))}
+        </ScrollView>
+      )}
 
       {showDoneButton ? (
         <View style={[styles.footer, isEventSheet ? styles.eventFooter : null]}>
@@ -87,11 +130,17 @@ export function WhatsNewInline({ doneLabel = 'Done', onDone, showDoneButton = tr
 
 function FeatureRow({
   feature,
+  index,
   onActionPress,
+  release,
+  renderMedia,
   variant,
 }: {
   feature: WhatsNewFeature;
+  index: number;
   onActionPress(): void;
+  release: WhatsNewRelease;
+  renderMedia?: WhatsNewContentProps['renderMedia'];
   variant: WhatsNewContentVariant;
 }) {
   const { theme } = useWhatsNew();
@@ -107,6 +156,13 @@ function FeatureRow({
     <View style={[styles.feature, isEventSheet ? styles.eventFeature : null]}>
       {icon}
       <View style={[styles.featureBody, isEventSheet && !icon ? styles.eventFeatureBodyWithoutIcon : null]}>
+        {feature.media || feature.image ? (
+          <MediaFrame
+            media={feature.media ?? { type: 'image', url: feature.image }}
+            renderMedia={renderMedia}
+            context={{ kind: 'feature', feature, release, index }}
+          />
+        ) : null}
         <Text style={[styles.featureTitle, isEventSheet ? styles.eventFeatureTitle : null, { color: theme.colors.text }]}>{feature.title}</Text>
         {feature.description ? (
           <Text style={[styles.featureDescription, isEventSheet ? styles.eventFeatureDescription : null, { color: theme.colors.muted }]}>
@@ -119,6 +175,89 @@ function FeatureRow({
           </Pressable>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+function GuideStep({
+  index,
+  release,
+  renderMedia,
+  pageWidth,
+  step,
+  total,
+}: {
+  index: number;
+  release: WhatsNewRelease;
+  renderMedia?: WhatsNewContentProps['renderMedia'];
+  pageWidth: number;
+  step: WhatsNewGuideStep;
+  total: number;
+}) {
+  const { theme } = useWhatsNew();
+  const media = step.media ?? (step.image ? { type: 'image' as const, url: step.image } : null);
+
+  return (
+    <View style={[styles.guideStep, { width: pageWidth }]}>
+      {media ? <MediaFrame context={{ kind: 'step', step, release, index }} media={media} renderMedia={renderMedia} /> : null}
+      <View style={styles.guideText}>
+        <Text style={[styles.eventFeatureTitle, { color: theme.colors.text }]}>{step.title}</Text>
+        {step.description ? <Text style={[styles.eventFeatureDescription, { color: theme.colors.muted }]}>{step.description}</Text> : null}
+      </View>
+      <View accessibilityLabel={`Step ${index + 1} of ${total}`} style={styles.stepIndicators}>
+        {Array.from({ length: total }).map((_, itemIndex) => (
+          <View
+            key={itemIndex}
+            style={[styles.stepIndicator, { backgroundColor: itemIndex === index ? theme.colors.primary : theme.colors.border }]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function MediaFrame({
+  context,
+  media,
+  renderMedia,
+}: {
+  context:
+    | {
+        kind: 'feature';
+        feature: WhatsNewFeature;
+        release: WhatsNewRelease;
+        index: number;
+      }
+    | {
+        kind: 'step';
+        step: WhatsNewGuideStep;
+        release: WhatsNewRelease;
+        index: number;
+      };
+  media: WhatsNewMediaDescriptor;
+  renderMedia?: WhatsNewContentProps['renderMedia'];
+}) {
+  const { theme } = useWhatsNew();
+  const renderedMedia = renderMedia?.({ ...context, media } as Parameters<NonNullable<WhatsNewContentProps['renderMedia']>>[0]);
+
+  if (renderedMedia) {
+    return <View style={styles.mediaFrame}>{renderedMedia}</View>;
+  }
+
+  if (media.type === 'image' && media.url) {
+    return (
+      <Image
+        accessibilityLabel={media.accessibilityLabel}
+        resizeMode="cover"
+        source={{ uri: media.url }}
+        style={[styles.mediaImage, { aspectRatio: media.aspectRatio ?? 1.65 }]}
+      />
+    );
+  }
+
+  return (
+    <View style={[styles.mediaPlaceholder, { aspectRatio: media.aspectRatio ?? 1.65, borderColor: theme.colors.border }]}>
+      <Text style={[styles.mediaPlaceholderText, { color: theme.colors.muted }]}>{media.accessibilityLabel ?? media.assetId ?? media.type}</Text>
     </View>
   );
 }
@@ -181,6 +320,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 0,
     paddingBottom: 28,
+  },
+  guideContent: {
+    paddingBottom: 8,
+  },
+  eventGuideContent: {
+    paddingBottom: 28,
+  },
+  guideStep: {
+    gap: 18,
+    paddingHorizontal: 32,
+  },
+  guideText: {
+    gap: 4,
+  },
+  mediaFrame: {
+    width: '100%',
+  },
+  mediaImage: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  mediaPlaceholder: {
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  mediaPlaceholderText: {
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  stepIndicators: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 7,
+    paddingTop: 4,
+  },
+  stepIndicator: {
+    borderRadius: 4,
+    height: 8,
+    width: 8,
   },
   feature: {
     flexDirection: 'row',

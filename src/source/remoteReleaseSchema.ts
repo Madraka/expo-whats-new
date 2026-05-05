@@ -13,14 +13,31 @@ const featureActionSchema = z
   })
   .strip();
 
+const mediaDescriptorSchema = z
+  .object({
+    type: z.enum(['image', 'lottie', 'rive', 'video', 'custom']),
+    assetId: z.string().min(1).optional(),
+    url: z.string().min(1).optional(),
+    poster: z.string().optional(),
+    aspectRatio: z.number().positive().optional(),
+    autoplay: z.boolean().optional(),
+    loop: z.boolean().optional(),
+    accessibilityLabel: z.string().optional(),
+    metadata: z.record(z.unknown()).optional(),
+  })
+  .strip();
+
 const remoteFeatureSchema = z
   .object({
     title: z.string().min(1),
     description: z.string().optional(),
     image: z.string().optional(),
+    media: mediaDescriptorSchema.optional(),
     action: featureActionSchema.optional(),
   })
   .strip();
+
+const remoteGuideStepSchema = remoteFeatureSchema;
 
 const acknowledgementSchema = z
   .object({
@@ -36,6 +53,7 @@ const releaseLocalizationSchema = z
     title: z.string().optional(),
     subtitle: z.string().optional(),
     features: z.array(remoteFeatureSchema).optional(),
+    steps: z.array(remoteGuideStepSchema).optional(),
     acknowledgement: acknowledgementSchema.pick({ acceptLabel: true, declineLabel: true }).optional(),
   })
   .strip();
@@ -48,7 +66,9 @@ const releaseSchema = z
     title: z.string().optional(),
     subtitle: z.string().optional(),
     date: z.string().optional(),
+    presentation: z.enum(['list', 'guide']).optional(),
     features: z.array(remoteFeatureSchema).min(1),
+    steps: z.array(remoteGuideStepSchema).optional(),
     acknowledgement: acknowledgementSchema.optional(),
     minAppVersion: z.string().optional(),
     maxAppVersion: z.string().optional(),

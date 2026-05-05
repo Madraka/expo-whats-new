@@ -9,6 +9,7 @@ export function WhatsNewModal({ variant = 'card', ...props }: WhatsNewContentPro
   const { currentRelease, visible, hide, theme } = useWhatsNew();
   const isEventSheet = variant === 'event-sheet';
   const canDismiss = currentRelease ? !isRequiredRelease(currentRelease) : true;
+  const title = currentRelease?.title ?? "What's New";
 
   function handleRequestClose() {
     if (canDismiss) {
@@ -19,8 +20,18 @@ export function WhatsNewModal({ variant = 'card', ...props }: WhatsNewContentPro
   return (
     <Modal animationType={isEventSheet ? 'slide' : 'fade'} transparent visible={visible} onRequestClose={handleRequestClose}>
       <View style={[styles.backdrop, isEventSheet ? styles.eventBackdrop : styles.cardBackdrop, { backgroundColor: theme.colors.backdrop }]}>
-        {canDismiss ? <Pressable style={StyleSheet.absoluteFill} onPress={hide} /> : null}
+        {canDismiss ? (
+          <Pressable
+            accessibilityLabel={`Dismiss ${title}`}
+            accessibilityRole="button"
+            style={StyleSheet.absoluteFill}
+            onPress={hide}
+          />
+        ) : null}
         <View
+          accessibilityLabel={title}
+          accessibilityViewIsModal
+          importantForAccessibility="yes"
           style={[
             styles.sheet,
             isEventSheet ? styles.eventSheet : styles.cardSheet,

@@ -178,6 +178,87 @@ const locale = getLocales()[0]?.languageTag ?? 'en-US';
 
 Locale matching normalizes tags and falls back by language, so `tr-TR` can match a `tr` localization. The provider reads native app version and platform when the Expo module is available; web, Expo Go, SSR-like shells, and custom version systems can pass `appVersion` and `platform` explicitly. Remote cache entries are stored with metadata (`schemaVersion`, `fetchedAt`, `expiresAt`, `releases`) and older array-only cache entries remain readable. The default remote policy is `network-first`: fetch fresh data and fall back to cache on failure. Use `requestPolicy: 'cache-first'` with `cacheTtlMs` to return fresh cached content before hitting the network; expired cache refreshes from the network and still acts as a stale offline fallback. If one URL returns different payloads for different headers or audiences, provide a stable `cacheKey`.
 
+Remote releases do not have to come from HTTP. Use `type: 'custom'` for Supabase, SQLite, local files, feature-flag SDKs, or any other source that can return the same JSON payload shape. Custom sources still use the same validation, localization, cache, and acknowledgement flow.
+
+```tsx
+<WhatsNewProvider
+  source={{
+    type: 'custom',
+    key: 'supabase:whats_new_events',
+    cache: true,
+    cacheKey: 'company-a:whats-new',
+    requestPolicy: 'cache-first',
+    loader: async () => {
+      const { data, error } = await supabase
+        .from('whats_new_events')
+        .select('payload')
+        .eq('enabled', true)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data.payload;
+    },
+  }}
+>
+  <Root />
+</WhatsNewProvider>
+```
+
+For SQLite, return the stored JSON object or `{ releases }` from the loader. The package intentionally does not import Supabase or SQLite clients.
+
+## Interactive Guides And Media
+
+Use `presentation: 'guide'` for step-based onboarding, Telegram-style walkthroughs, and rich feature education. The core package only owns the structure and acknowledgement flow. Animation renderers such as Lottie, Rive, video, or custom native views stay in the host app through `renderMedia`.
+
+```ts
+const releases = [
+  {
+    id: 'critical-alerts-guide',
+    version: '2.1.0',
+    presentation: 'guide',
+    title: 'Critical Alerts',
+    features: [{ title: 'Critical Alerts' }],
+    steps: [
+      {
+        title: 'Sound the alarm',
+        description: 'Mark important reminders so they play an alarm.',
+        media: {
+          type: 'lottie',
+          assetId: 'critical-alerts-step',
+          aspectRatio: 1.6,
+          autoplay: true,
+          loop: true,
+          accessibilityLabel: 'Critical alert animation',
+        },
+      },
+    ],
+    acknowledgement: {
+      mode: 'accepted',
+      required: true,
+      acceptLabel: 'Continue',
+    },
+  },
+];
+```
+
+```tsx
+<WhatsNewScreen
+  variant="event-sheet"
+  renderMedia={({ media }) => {
+    if (media.type === 'lottie' && media.assetId === 'critical-alerts-step') {
+      return <CriticalAlertsLottie />;
+    }
+
+    return null;
+  }}
+/>
+```
+
+Remote JSON should send media descriptors such as `assetId`, not arbitrary React nodes. This keeps the package renderer-agnostic and lets each app decide whether to use Lottie, Rive, static posters, video, or reduced-motion fallbacks.
+
 ## Expo Router Native Modal Routes
 
 The package does not depend on Expo Router. Keep navigation in your app and use `onAutoShow` to route an unseen release into a native-stack modal or sheet.
@@ -454,3 +535,5 @@ npm run build
 npm run test -- --watch=false
 npm run lint
 ```
+
+Before tagging a production release, run the platform smoke checklist in `PRODUCTION_CHECKLIST.md`.

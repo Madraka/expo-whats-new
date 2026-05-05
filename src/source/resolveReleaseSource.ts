@@ -27,9 +27,15 @@ function parseRemotePayload(payload: unknown): WhatsNewRelease[] {
   return Array.isArray(result.data) ? result.data : result.data.releases;
 }
 
+function createAbortController(timeoutMs?: number) {
+  const controller = typeof AbortController !== 'undefined' && timeoutMs ? new AbortController() : null;
+  const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+  return { controller, timeout };
+}
+
 async function fetchRemotePayload(source: Extract<WhatsNewReleaseSource, { type: 'remote' }>) {
-  const controller = typeof AbortController !== 'undefined' && source.timeoutMs ? new AbortController() : null;
-  const timeout = controller ? setTimeout(() => controller.abort(), source.timeoutMs) : null;
+  const { controller, timeout } = createAbortController(source.timeoutMs);
 
   if (source.fetcher) {
     try {
@@ -49,6 +55,18 @@ async function fetchRemotePayload(source: Extract<WhatsNewReleaseSource, { type:
     }
 
     return response.json();
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+async function loadCustomPayload(source: Extract<WhatsNewReleaseSource, { type: 'custom' }>) {
+  const { controller, timeout } = createAbortController(source.timeoutMs);
+
+  try {
+    return await source.loader({ signal: controller?.signal });
   } finally {
     if (timeout) {
       clearTimeout(timeout);
@@ -94,7 +112,12 @@ async function readCachedEntry(storage: WhatsNewStorageAdapter | undefined, cach
     return null;
   }
 
-  return parseCachedEntry(cachedValue);
+  try {
+    return parseCachedEntry(cachedValue);
+  } catch {
+    await storage?.removeItem(cacheKey);
+    return null;
+  }
 }
 
 function isCacheFresh(entry: { expiresAt?: string }) {
@@ -121,7 +144,8 @@ export async function resolveReleaseSource({
     return applyLocalization(source.releases, locale, fallbackLocale);
   }
 
-  const cacheKey = `${storageKeyPrefix}:${source.cacheKey ?? source.url}`;
+  const cacheIdentity = source.cacheKey ?? (source.type === 'remote' ? source.url : source.key);
+  const cacheKey = `${storageKeyPrefix}:${cacheIdentity}`;
   const shouldUseCache = source.cache !== false && storage;
 
   if (source.requestPolicy === 'cache-first' && shouldUseCache) {
@@ -133,7 +157,7 @@ export async function resolveReleaseSource({
   }
 
   try {
-    const payload = await fetchRemotePayload(source);
+    const payload = source.type === 'remote' ? await fetchRemotePayload(source) : await loadCustomPayload(source);
     const remoteReleases = parseRemotePayload(payload);
 
     if (shouldUseCache) {

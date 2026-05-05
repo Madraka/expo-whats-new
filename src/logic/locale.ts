@@ -66,6 +66,7 @@ export function localizeRelease(release: WhatsNewRelease, locale?: string, fallb
     title: localization.title ?? release.title,
     subtitle: localization.subtitle ?? release.subtitle,
     features: localization.features ?? release.features,
+    steps: localization.steps ?? release.steps,
     acknowledgement: localization.acknowledgement
       ? {
           ...release.acknowledgement,

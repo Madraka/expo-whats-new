@@ -21,15 +21,41 @@ export type WhatsNewFeatureAction = {
   payload?: Record<string, unknown>;
 };
 
+export type WhatsNewMediaDescriptor = {
+  type: 'image' | 'lottie' | 'rive' | 'video' | 'custom';
+  assetId?: string;
+  url?: string;
+  poster?: string;
+  aspectRatio?: number;
+  autoplay?: boolean;
+  loop?: boolean;
+  accessibilityLabel?: string;
+  metadata?: Record<string, unknown>;
+};
+
 export type WhatsNewFeature = {
   title: string;
   description?: string;
   icon?: ReactNode;
   image?: string;
+  media?: WhatsNewMediaDescriptor;
   action?: WhatsNewFeatureAction;
 };
 
 export type WhatsNewRemoteFeature = Omit<WhatsNewFeature, 'icon'>;
+
+export type WhatsNewGuideStep = {
+  title: string;
+  description?: string;
+  icon?: ReactNode;
+  image?: string;
+  media?: WhatsNewMediaDescriptor;
+  action?: WhatsNewFeatureAction;
+};
+
+export type WhatsNewRemoteGuideStep = Omit<WhatsNewGuideStep, 'icon'>;
+
+export type WhatsNewPresentation = 'list' | 'guide';
 
 export type WhatsNewReleaseKind = 'whats-new' | 'announcement' | 'policy' | 'consent';
 
@@ -48,6 +74,7 @@ export type WhatsNewReleaseLocalization = {
   title?: string;
   subtitle?: string;
   features?: WhatsNewRemoteFeature[];
+  steps?: WhatsNewRemoteGuideStep[];
   acknowledgement?: Pick<WhatsNewAcknowledgement, 'acceptLabel' | 'declineLabel'>;
 };
 
@@ -58,7 +85,9 @@ export type WhatsNewRelease = {
   title?: string;
   subtitle?: string;
   date?: string;
+  presentation?: WhatsNewPresentation;
   features: WhatsNewFeature[];
+  steps?: WhatsNewGuideStep[];
   acknowledgement?: WhatsNewAcknowledgement;
   minAppVersion?: string;
   maxAppVersion?: string;
@@ -84,6 +113,16 @@ export type WhatsNewReleaseSource =
       requestPolicy?: 'network-first' | 'cache-first';
       timeoutMs?: number;
       fetcher?: (url: string, options: { headers?: Record<string, string>; signal?: AbortSignal }) => Promise<unknown>;
+    }
+  | {
+      type: 'custom';
+      key: string;
+      cache?: boolean;
+      cacheKey?: string;
+      cacheTtlMs?: number;
+      requestPolicy?: 'network-first' | 'cache-first';
+      loader: (options: { signal?: AbortSignal }) => Promise<unknown>;
+      timeoutMs?: number;
     };
 
 export type DisplayPolicy = 'once-per-release' | 'always' | 'manual';
@@ -172,9 +211,26 @@ export type WhatsNewProviderProps = {
 
 export type WhatsNewContentVariant = 'card' | 'event-sheet';
 
+export type WhatsNewMediaRenderContext =
+  | {
+      kind: 'feature';
+      media: WhatsNewMediaDescriptor;
+      feature: WhatsNewFeature;
+      release: WhatsNewRelease;
+      index: number;
+    }
+  | {
+      kind: 'step';
+      media: WhatsNewMediaDescriptor;
+      step: WhatsNewGuideStep;
+      release: WhatsNewRelease;
+      index: number;
+    };
+
 export type WhatsNewContentProps = {
   doneLabel?: string;
   onDone?: () => void | Promise<void>;
+  renderMedia?: (context: WhatsNewMediaRenderContext) => ReactNode;
   showDoneButton?: boolean;
   variant?: WhatsNewContentVariant;
 };

@@ -108,6 +108,61 @@ const consentReleases: WhatsNewRelease[] = [
   },
 ];
 
+const guideReleases: WhatsNewRelease[] = [
+  {
+    id: 'interactive-guide',
+    version: '2026.05.guide',
+    presentation: 'guide',
+    title: 'Interactive Guide',
+    subtitle: 'A host-rendered media walkthrough without adding animation dependencies to the core package.',
+    acknowledgement: {
+      mode: 'accepted',
+      required: true,
+      acceptLabel: 'Start using it',
+    },
+    features: [
+      {
+        title: 'Host-rendered media',
+        description: 'The package provides the guide structure while the app renders Lottie, Rive, video, or symbols.',
+        media: {
+          type: 'custom',
+          assetId: 'guide-media',
+          accessibilityLabel: 'A layered guide animation placeholder',
+        },
+      },
+    ],
+    steps: [
+      {
+        title: 'Show the concept',
+        description: 'Use large visual media to introduce the new workflow before showing controls.',
+        media: {
+          type: 'custom',
+          assetId: 'guide-concept',
+          accessibilityLabel: 'Guide concept animation',
+        },
+      },
+      {
+        title: 'Teach the action',
+        description: 'Pair each step with one clear user action and keep acknowledgement for the final CTA.',
+        media: {
+          type: 'custom',
+          assetId: 'guide-action',
+          accessibilityLabel: 'Guide action animation',
+        },
+      },
+      {
+        title: 'Keep core lightweight',
+        description: 'Lottie or Rive stays in the host app through renderMedia, so apps choose their own renderer.',
+        media: {
+          type: 'custom',
+          assetId: 'guide-core',
+          accessibilityLabel: 'Core package boundary animation',
+        },
+      },
+    ],
+  },
+];
+
 const actionReleases: WhatsNewRelease[] = [
   {
     version: '2.1.0-actions',
@@ -237,6 +292,13 @@ export const scenarios: ExampleScenario[] = [
     description: 'URL and app-navigation actions inside a release event.',
     storageKey: 'example:actions',
     releases: actionReleases,
+  },
+  {
+    id: 'guide',
+    title: 'Interactive Guide',
+    description: 'Step-based guide sheet with host-rendered media slots.',
+    storageKey: 'example:guide',
+    releases: guideReleases,
   },
   {
     id: 'announcement',

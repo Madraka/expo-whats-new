@@ -21,10 +21,34 @@ describe('acknowledgementStorage', () => {
     );
 
     expect(parseStoredAcknowledgement(await storage.getItem('test:key'))).toMatchObject({
-      releaseId: 'terms-2026-05',
-      version: '2026.05',
-      status: 'seen',
+      schemaVersion: 1,
+      releases: {
+        'terms-2026-05': {
+          releaseId: 'terms-2026-05',
+          version: '2026.05',
+          status: 'seen',
+        },
+      },
     });
+  });
+
+  it('preserves multiple acknowledgements under the same storage key', async () => {
+    const storage = createMemoryStorage();
+
+    await setReleaseAcknowledgement(storage, 'test:key', { id: 'release-a', version: '1.0.0', features: [{ title: 'A' }] }, 'seen');
+    await setReleaseAcknowledgement(storage, 'test:key', { id: 'release-b', version: '1.0.0', features: [{ title: 'B' }] }, 'accepted');
+
+    const stored = parseStoredAcknowledgement(await storage.getItem('test:key'));
+
+    expect(
+      isReleaseAcknowledged({ id: 'release-a', version: '1.0.0', features: [{ title: 'A' }] }, stored)
+    ).toBe(true);
+    expect(
+      isReleaseAcknowledged({ id: 'release-b', version: '1.0.0', features: [{ title: 'B' }] }, stored)
+    ).toBe(true);
+    expect(
+      isReleaseAcknowledged({ id: 'release-c', version: '1.0.0', features: [{ title: 'C' }] }, stored)
+    ).toBe(false);
   });
 
   it('does not acknowledge a release with a different stored release id', () => {
@@ -36,10 +60,15 @@ describe('acknowledgementStorage', () => {
           features: [{ title: 'New policy' }],
         },
         {
-          releaseId: 'old-policy',
-          version: '2026.05',
-          status: 'seen',
-          updatedAt: '2026-05-05T00:00:00.000Z',
+          schemaVersion: 1,
+          releases: {
+            'old-policy': {
+              releaseId: 'old-policy',
+              version: '2026.05',
+              status: 'seen',
+              updatedAt: '2026-05-05T00:00:00.000Z',
+            },
+          },
         }
       )
     ).toBe(false);
