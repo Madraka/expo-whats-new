@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { getLocales } from 'expo-localization';
 import { WhatsNewProvider } from 'expo-whats-new';
 
 import { ScenarioProvider, useScenario } from './scenario-context';
@@ -13,6 +14,7 @@ export default function RootLayout() {
 
 function WhatsNewRuntime() {
   const { scenario } = useScenario();
+  const locale = getLocales()[0]?.languageTag ?? 'en-US';
 
   return (
     <WhatsNewProvider
@@ -21,6 +23,8 @@ function WhatsNewRuntime() {
       source={scenario.source}
       displayPolicy={scenario.displayPolicy}
       storageKey={scenario.storageKey}
+      locale={locale}
+      fallbackLocale="en"
       autoShow={false}
       onActionPress={(feature) => {
         if (feature.action?.screen) {

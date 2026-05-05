@@ -19,6 +19,8 @@ export function WhatsNewProvider({
   storage = createDefaultStorage(),
   storageKey = DEFAULT_STORAGE_KEY,
   displayPolicy = 'once-per-release',
+  platform,
+  appVersion,
   locale,
   fallbackLocale,
   audience,
@@ -50,10 +52,10 @@ export function WhatsNewProvider({
       locale,
       fallbackLocale,
       audience,
-      appVersion: appInfo?.version ?? null,
-      platform: appInfo?.platform ?? (Platform.OS === 'web' ? 'web' : Platform.OS === 'android' ? 'android' : 'ios'),
+      appVersion: appVersion ?? appInfo?.version ?? null,
+      platform: platform ?? appInfo?.platform ?? (Platform.OS === 'web' ? 'web' : Platform.OS === 'android' ? 'android' : 'ios'),
     });
-  }, [audience, displayPolicy, fallbackLocale, locale, releases, source, storage, storageKey]);
+  }, [appVersion, audience, displayPolicy, fallbackLocale, locale, platform, releases, source, storage, storageKey]);
 
   const refresh = useCallback(async () => {
     setStatus('loading');

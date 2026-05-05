@@ -187,6 +187,8 @@ type RemoteCacheEnvelope = {
 
 Older array-only cache entries are still readable. When a remote URL returns different release JSON by locale, audience, or authorization headers, the host app should provide `source.cacheKey` so cached payloads cannot cross streams.
 
+Remote sources default to `network-first`: fetch the latest payload and fall back to cache if the request or validation fails. `requestPolicy: 'cache-first'` uses fresh cache before network, treats expired cache as refreshable, and still allows stale cache as an offline fallback.
+
 ## Release Schema
 
 ```ts
@@ -208,6 +210,8 @@ export type WhatsNewRelease = {
 ```
 
 Remote JSON is validated before use. `localizations` are hydrated after payload resolution and before release targeting. Locale matching normalizes BCP-47 tags and falls back by language, so a host-provided `tr-TR` locale can use a `tr` localization. The package does not import `expo-localization`; Expo apps pass `locale` and `fallbackLocale` into the provider.
+
+The provider reads native app version and platform through the Expo module when available. Host apps can override both with `appVersion` and `platform`, which is important for web, Expo Go fallback behavior, white-label shells, or apps that source display version from their own runtime config.
 
 ## Delivery Phases
 

@@ -162,6 +162,7 @@ const announcementReleases: WhatsNewRelease[] = [
 
 const remoteReleases: WhatsNewRelease[] = [
   {
+    id: 'localized-remote-source',
     version: 'remote-2026.05',
     title: 'Remote source',
     subtitle: 'Loaded from a simulated CDN response with cache enabled.',
@@ -169,14 +170,42 @@ const remoteReleases: WhatsNewRelease[] = [
       {
         title: 'Remote JSON',
         description: 'The provider can resolve releases from an array or a { releases } object.',
-        icon: symbol('network'),
       },
       {
         title: 'Cache fallback',
         description: 'When cache is enabled, successful responses are stored for later offline fallback.',
-        icon: symbol('externaldrive.fill'),
       },
     ],
+    localizations: {
+      en: {
+        title: 'Remote source',
+        subtitle: 'Loaded from a simulated CDN response with cache enabled.',
+        features: [
+          {
+            title: 'Validated JSON',
+            description: 'Remote payloads are checked before any content reaches the UI.',
+          },
+          {
+            title: 'Localized copy',
+            description: 'The host app passes the Expo locale while the package keeps acknowledgement state stable.',
+          },
+        ],
+      },
+      tr: {
+        title: 'Uzak kaynak',
+        subtitle: 'Cache destekli simüle edilmiş CDN yanıtından yüklendi.',
+        features: [
+          {
+            title: 'Doğrulanan JSON',
+            description: 'Uzak payload, içerik UI’a ulaşmadan önce kontrol edilir.',
+          },
+          {
+            title: 'Dil uyumlu metin',
+            description: 'Host app Expo locale bilgisini verir, paket kabul durumunu aynı release üzerinde tutar.',
+          },
+        ],
+      },
+    },
   },
 ];
 
@@ -225,6 +254,10 @@ export const scenarios: ExampleScenario[] = [
       type: 'remote',
       url: 'https://cdn.example.com/whats-new.json',
       cache: true,
+      cacheKey: 'example:remote-localized',
+      cacheTtlMs: 1000 * 60 * 60,
+      requestPolicy: 'cache-first',
+      timeoutMs: 5000,
       fetcher: async () => ({ releases: remoteReleases }),
     },
   },

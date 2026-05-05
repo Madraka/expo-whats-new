@@ -81,6 +81,7 @@ export type WhatsNewReleaseSource =
       cache?: boolean;
       cacheKey?: string;
       cacheTtlMs?: number;
+      requestPolicy?: 'network-first' | 'cache-first';
       timeoutMs?: number;
       fetcher?: (url: string, options: { headers?: Record<string, string>; signal?: AbortSignal }) => Promise<unknown>;
     };
@@ -156,6 +157,8 @@ export type WhatsNewProviderProps = {
   storage?: WhatsNewStorageAdapter;
   storageKey?: string;
   displayPolicy?: DisplayPolicy;
+  platform?: PlatformTarget;
+  appVersion?: string | null;
   locale?: string;
   fallbackLocale?: string;
   audience?: string | string[];

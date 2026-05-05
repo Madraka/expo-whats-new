@@ -77,10 +77,12 @@ function SettingsScreen() {
     url: 'https://cdn.example.com/whats-new.json',
     cache: true,
     cacheTtlMs: 1000 * 60 * 60,
+    requestPolicy: 'cache-first',
     timeoutMs: 8000,
   }}
   locale="tr-TR"
   fallbackLocale="en"
+  appVersion="2.1.0"
   autoShow
 >
   <Root />
@@ -174,7 +176,7 @@ const locale = getLocales()[0]?.languageTag ?? 'en-US';
 </WhatsNewProvider>
 ```
 
-Locale matching normalizes tags and falls back by language, so `tr-TR` can match a `tr` localization. Remote cache entries are stored with metadata (`schemaVersion`, `fetchedAt`, `expiresAt`, `releases`) and older array-only cache entries remain readable. If one URL returns different payloads for different headers or audiences, provide a stable `cacheKey`.
+Locale matching normalizes tags and falls back by language, so `tr-TR` can match a `tr` localization. The provider reads native app version and platform when the Expo module is available; web, Expo Go, SSR-like shells, and custom version systems can pass `appVersion` and `platform` explicitly. Remote cache entries are stored with metadata (`schemaVersion`, `fetchedAt`, `expiresAt`, `releases`) and older array-only cache entries remain readable. The default remote policy is `network-first`: fetch fresh data and fall back to cache on failure. Use `requestPolicy: 'cache-first'` with `cacheTtlMs` to return fresh cached content before hitting the network; expired cache refreshes from the network and still acts as a stale offline fallback. If one URL returns different payloads for different headers or audiences, provide a stable `cacheKey`.
 
 ## Expo Router Native Modal Routes
 

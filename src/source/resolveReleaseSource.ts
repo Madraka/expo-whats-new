@@ -71,15 +71,38 @@ function createCacheEnvelope(releases: WhatsNewRelease[], cacheTtlMs?: number) {
   };
 }
 
-function parseCachedReleases(value: string): WhatsNewRelease[] {
+function parseCachedEntry(value: string): { releases: WhatsNewRelease[]; expiresAt?: string } {
   const parsed = JSON.parse(value) as unknown;
   const envelope = remoteReleaseCacheEnvelopeSchema.safeParse(parsed);
 
   if (envelope.success) {
-    return envelope.data.releases;
+    return {
+      releases: envelope.data.releases,
+      expiresAt: envelope.data.expiresAt,
+    };
   }
 
-  return parseRemotePayload(parsed);
+  return {
+    releases: parseRemotePayload(parsed),
+  };
+}
+
+async function readCachedEntry(storage: WhatsNewStorageAdapter | undefined, cacheKey: string) {
+  const cachedValue = await storage?.getItem(cacheKey);
+
+  if (!cachedValue) {
+    return null;
+  }
+
+  return parseCachedEntry(cachedValue);
+}
+
+function isCacheFresh(entry: { expiresAt?: string }) {
+  if (!entry.expiresAt) {
+    return true;
+  }
+
+  return new Date(entry.expiresAt).getTime() > Date.now();
 }
 
 export async function resolveReleaseSource({
@@ -99,22 +122,31 @@ export async function resolveReleaseSource({
   }
 
   const cacheKey = `${storageKeyPrefix}:${source.cacheKey ?? source.url}`;
+  const shouldUseCache = source.cache !== false && storage;
+
+  if (source.requestPolicy === 'cache-first' && shouldUseCache) {
+    const cachedEntry = await readCachedEntry(storage, cacheKey);
+
+    if (cachedEntry && isCacheFresh(cachedEntry)) {
+      return applyLocalization(cachedEntry.releases, locale, fallbackLocale);
+    }
+  }
 
   try {
     const payload = await fetchRemotePayload(source);
     const remoteReleases = parseRemotePayload(payload);
 
-    if (source.cache !== false && storage) {
+    if (shouldUseCache) {
       await storage.setItem(cacheKey, JSON.stringify(createCacheEnvelope(remoteReleases, source.cacheTtlMs)));
     }
 
     return applyLocalization(remoteReleases, locale, fallbackLocale);
   } catch (error) {
-    if (source.cache !== false && storage) {
-      const cachedValue = await storage.getItem(cacheKey);
+    if (shouldUseCache) {
+      const cachedEntry = await readCachedEntry(storage, cacheKey);
 
-      if (cachedValue) {
-        return applyLocalization(parseCachedReleases(cachedValue), locale, fallbackLocale);
+      if (cachedEntry) {
+        return applyLocalization(cachedEntry.releases, locale, fallbackLocale);
       }
     }
 

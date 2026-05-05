@@ -2,6 +2,7 @@ import type { WhatsNewAcknowledgementStatus, WhatsNewRelease, WhatsNewStorageAda
 
 export type StoredAcknowledgement = {
   version: string;
+  releaseId?: string;
   status: WhatsNewAcknowledgementStatus;
   updatedAt: string;
 };
@@ -29,6 +30,7 @@ export function parseStoredAcknowledgement(value: string | null): StoredAcknowle
     if (parsed.version && parsed.status) {
       return {
         version: parsed.version,
+        releaseId: parsed.releaseId,
         status: parsed.status,
         updatedAt: parsed.updatedAt ?? '',
       };
@@ -49,6 +51,10 @@ export function isReleaseAcknowledged(release: WhatsNewRelease, stored: StoredAc
     return false;
   }
 
+  if (release.id && stored.releaseId && stored.releaseId !== release.id) {
+    return false;
+  }
+
   return getAcknowledgementMode(release) === 'accepted' ? stored.status === 'accepted' : stored.status !== 'declined';
 }
 
@@ -62,6 +68,7 @@ export async function setReleaseAcknowledgement(
     storageKey,
     JSON.stringify({
       version: release.version,
+      releaseId: release.id,
       status,
       updatedAt: new Date().toISOString(),
     } satisfies StoredAcknowledgement)

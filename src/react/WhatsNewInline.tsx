@@ -106,7 +106,7 @@ function FeatureRow({
   return (
     <View style={[styles.feature, isEventSheet ? styles.eventFeature : null]}>
       {icon}
-      <View style={styles.featureBody}>
+      <View style={[styles.featureBody, isEventSheet && !icon ? styles.eventFeatureBodyWithoutIcon : null]}>
         <Text style={[styles.featureTitle, isEventSheet ? styles.eventFeatureTitle : null, { color: theme.colors.text }]}>{feature.title}</Text>
         {feature.description ? (
           <Text style={[styles.featureDescription, isEventSheet ? styles.eventFeatureDescription : null, { color: theme.colors.muted }]}>
@@ -206,6 +206,9 @@ const styles = StyleSheet.create({
   },
   featureBody: {
     flex: 1,
+  },
+  eventFeatureBodyWithoutIcon: {
+    paddingLeft: 0,
   },
   featureTitle: {
     fontSize: 16,
