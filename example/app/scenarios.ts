@@ -235,6 +235,9 @@ const remoteReleases: WhatsNewRelease[] = [
       en: {
         title: 'Remote source',
         subtitle: 'Loaded from a simulated CDN response with cache enabled.',
+        acknowledgement: {
+          acceptLabel: 'Continue',
+        },
         features: [
           {
             title: 'Validated JSON',
@@ -249,6 +252,9 @@ const remoteReleases: WhatsNewRelease[] = [
       tr: {
         title: 'Uzak kaynak',
         subtitle: 'Cache destekli simüle edilmiş CDN yanıtından yüklendi.',
+        acknowledgement: {
+          acceptLabel: 'Sürdür',
+        },
         features: [
           {
             title: 'Doğrulanan JSON',

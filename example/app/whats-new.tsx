@@ -16,7 +16,7 @@ export default function WhatsNewRoute() {
           title: scenario.title,
         }}
       />
-      <WhatsNewScreen doneLabel="Sürdür" onDone={() => router.back()} renderMedia={renderMedia} variant="event-sheet" />
+      <WhatsNewScreen doneLabel="Continue" onDone={() => router.back()} renderMedia={renderMedia} variant="event-sheet" />
     </>
   );
 }
