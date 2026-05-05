@@ -27,6 +27,29 @@ describe('resolveReleaseSource', () => {
 
   it('loads cached remote releases when the network request fails', async () => {
     const storage = createMemoryStorage({
+      'expo-whats-new:remote-cache:https://example.com/releases.json': JSON.stringify({
+        schemaVersion: 1,
+        fetchedAt: '2026-05-05T00:00:00.000Z',
+        releases,
+      }),
+    });
+
+    const result = await resolveReleaseSource({
+      storage,
+      source: {
+        type: 'remote',
+        url: 'https://example.com/releases.json',
+        fetcher: async () => {
+          throw new Error('offline');
+        },
+      },
+    });
+
+    expect(result).toEqual(releases);
+  });
+
+  it('keeps backward compatibility with old array cache entries', async () => {
+    const storage = createMemoryStorage({
       'expo-whats-new:remote-cache:https://example.com/releases.json': JSON.stringify(releases),
     });
 
@@ -54,5 +77,51 @@ describe('resolveReleaseSource', () => {
     });
 
     expect(result).toEqual(releases);
+  });
+
+  it('rejects invalid remote release payloads before they reach UI', async () => {
+    await expect(
+      resolveReleaseSource({
+        source: {
+          type: 'remote',
+          url: 'https://example.com/releases.json',
+          fetcher: async () => ({ releases: [{ version: '1.0.0', features: [] }] }),
+        },
+      })
+    ).rejects.toThrow('Invalid remote whats-new payload');
+  });
+
+  it('hydrates localized release content with language fallback', async () => {
+    const result = await resolveReleaseSource({
+      locale: 'tr-TR',
+      fallbackLocale: 'en',
+      source: {
+        type: 'remote',
+        url: 'https://example.com/releases.json',
+        fetcher: async () => ({
+          releases: [
+            {
+              version: '1.0.0',
+              title: 'Default title',
+              features: [{ title: 'Default feature' }],
+              acknowledgement: { mode: 'accepted', acceptLabel: 'Continue' },
+              localizations: {
+                tr: {
+                  title: 'Turkce baslik',
+                  features: [{ title: 'Turkce ozellik', description: 'Aciklama' }],
+                  acknowledgement: { acceptLabel: 'Surdur' },
+                },
+              },
+            },
+          ],
+        }),
+      },
+    });
+
+    expect(result[0]).toMatchObject({
+      title: 'Turkce baslik',
+      acknowledgement: { acceptLabel: 'Surdur' },
+      features: [{ title: 'Turkce ozellik', description: 'Aciklama' }],
+    });
   });
 });

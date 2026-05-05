@@ -9,7 +9,9 @@ export async function shouldShowWhatsNew(options: ShouldShowWhatsNewOptions): Pr
   const release = resolveCurrentRelease(options.releases, {
     platform: options.platform,
     locale: options.locale,
+    fallbackLocale: options.fallbackLocale,
     audience: options.audience,
+    appVersion: options.appVersion,
   });
 
   if (!release) {

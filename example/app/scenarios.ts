@@ -1,3 +1,7 @@
+import { createElement } from 'react';
+import { Image } from 'expo-image';
+import { StyleSheet } from 'react-native';
+
 import type { DisplayPolicy, WhatsNewRelease, WhatsNewReleaseSource } from 'expo-whats-new';
 
 export type ExampleScenario = {
@@ -10,6 +14,21 @@ export type ExampleScenario = {
   source?: WhatsNewReleaseSource;
 };
 
+const styles = StyleSheet.create({
+  symbol: {
+    height: 56,
+    width: 56,
+  },
+});
+
+function symbol(name: string) {
+  return createElement(Image, {
+    source: `sf:${name}`,
+    style: styles.symbol,
+    tintColor: '#0a84ff',
+  });
+}
+
 const whatsNewReleases: WhatsNewRelease[] = [
   {
     version: '2.0.0',
@@ -19,14 +38,17 @@ const whatsNewReleases: WhatsNewRelease[] = [
       {
         title: 'Native modal sheet',
         description: 'Presented with Expo Router native-stack formSheet presentation.',
+        icon: symbol('rectangle.bottomthird.inset.filled'),
       },
       {
         title: 'Toolbar action',
         description: 'The Continue button lives in the native header instead of inside the content.',
+        icon: symbol('button.programmable'),
       },
       {
         title: 'Durable acknowledgement',
         description: 'Seen state is persisted through platform storage where native modules are available.',
+        icon: symbol('checkmark.seal.fill'),
       },
     ],
   },
@@ -48,10 +70,12 @@ const policyReleases: WhatsNewRelease[] = [
       {
         title: 'Account terms',
         description: 'We clarified account ownership and service availability language.',
+        icon: symbol('doc.text.fill'),
       },
       {
         title: 'Privacy language',
         description: 'We improved wording around diagnostics, support logs, and optional analytics.',
+        icon: symbol('lock.shield.fill'),
       },
     ],
   },
@@ -73,10 +97,12 @@ const consentReleases: WhatsNewRelease[] = [
       {
         title: 'Optional analytics',
         description: 'Usage signals help us find crashes, slow screens, and confusing flows.',
+        icon: symbol('chart.bar.xaxis'),
       },
       {
         title: 'No personal content',
         description: 'Event payloads should never include messages, documents, or private user content.',
+        icon: symbol('person.crop.circle.badge.checkmark'),
       },
     ],
   },
@@ -91,6 +117,7 @@ const actionReleases: WhatsNewRelease[] = [
       {
         title: 'Open documentation',
         description: 'URL actions are handled through React Native Linking.',
+        icon: symbol('safari.fill'),
         action: {
           label: 'Open Expo docs',
           url: 'https://docs.expo.dev',
@@ -99,6 +126,7 @@ const actionReleases: WhatsNewRelease[] = [
       {
         title: 'Navigate inside the app',
         description: 'Screen actions are passed to the app through onActionPress.',
+        icon: symbol('arrow.turn.up.right'),
         action: {
           label: 'Open custom screen',
           screen: '/details',
@@ -121,10 +149,12 @@ const announcementReleases: WhatsNewRelease[] = [
       {
         title: 'Maintenance window',
         description: 'Some services may be unavailable between 02:00 and 03:00 UTC.',
+        icon: symbol('clock.fill'),
       },
       {
         title: 'No user action required',
         description: 'The event is acknowledged as seen after the user taps Done.',
+        icon: symbol('checkmark.circle.fill'),
       },
     ],
   },
@@ -139,10 +169,12 @@ const remoteReleases: WhatsNewRelease[] = [
       {
         title: 'Remote JSON',
         description: 'The provider can resolve releases from an array or a { releases } object.',
+        icon: symbol('network'),
       },
       {
         title: 'Cache fallback',
         description: 'When cache is enabled, successful responses are stored for later offline fallback.',
+        icon: symbol('externaldrive.fill'),
       },
     ],
   },
@@ -211,6 +243,7 @@ export const scenarios: ExampleScenario[] = [
           {
             title: 'No automatic prompt',
             description: 'The sheet opens only when the app navigates to the route.',
+            icon: symbol('hand.tap.fill'),
           },
         ],
       },

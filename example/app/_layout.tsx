@@ -1,4 +1,4 @@
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 import { WhatsNewProvider } from 'expo-whats-new';
 
 import { ScenarioProvider, useScenario } from './scenario-context';
@@ -33,6 +33,17 @@ function WhatsNewRuntime() {
       onDecline={(release) => {
         console.log('Declined event', release.version);
       }}
+      theme={{
+        colors: {
+          backdrop: 'rgba(0, 0, 0, 0.72)',
+          background: '#1c1c1e',
+          surface: '#1c1c1e',
+          text: '#f5f5f7',
+          muted: '#9b9ba3',
+          primary: '#0a84ff',
+          border: 'transparent',
+        },
+      }}
     >
       <Stack>
         <Stack.Screen
@@ -44,10 +55,13 @@ function WhatsNewRuntime() {
         <Stack.Screen
           name="whats-new"
           options={{
+            contentStyle: { backgroundColor: 'transparent' },
+            gestureEnabled: false,
+            headerShown: false,
             presentation: 'formSheet',
-            title: scenario.title,
-            sheetAllowedDetents: [0.55, 0.9],
-            sheetGrabberVisible: true,
+            sheetAllowedDetents: [0.92],
+            sheetGrabberVisible: false,
+            title: '',
           }}
         />
         <Stack.Screen

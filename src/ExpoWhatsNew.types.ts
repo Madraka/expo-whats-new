@@ -29,6 +29,8 @@ export type WhatsNewFeature = {
   action?: WhatsNewFeatureAction;
 };
 
+export type WhatsNewRemoteFeature = Omit<WhatsNewFeature, 'icon'>;
+
 export type WhatsNewReleaseKind = 'whats-new' | 'announcement' | 'policy' | 'consent';
 
 export type WhatsNewAcknowledgementMode = 'seen' | 'accepted';
@@ -42,8 +44,16 @@ export type WhatsNewAcknowledgement = {
 
 export type WhatsNewAcknowledgementStatus = 'seen' | 'accepted' | 'declined';
 
+export type WhatsNewReleaseLocalization = {
+  title?: string;
+  subtitle?: string;
+  features?: WhatsNewRemoteFeature[];
+  acknowledgement?: Pick<WhatsNewAcknowledgement, 'acceptLabel' | 'declineLabel'>;
+};
+
 export type WhatsNewRelease = {
   version: string;
+  id?: string;
   kind?: WhatsNewReleaseKind;
   title?: string;
   subtitle?: string;
@@ -54,6 +64,7 @@ export type WhatsNewRelease = {
   maxAppVersion?: string;
   platform?: PlatformTarget[];
   locale?: string | string[];
+  localizations?: Record<string, WhatsNewReleaseLocalization>;
   audience?: string | string[];
   metadata?: Record<string, unknown>;
 };
@@ -68,7 +79,10 @@ export type WhatsNewReleaseSource =
       url: string;
       headers?: Record<string, string>;
       cache?: boolean;
-      fetcher?: (url: string, options: { headers?: Record<string, string> }) => Promise<unknown>;
+      cacheKey?: string;
+      cacheTtlMs?: number;
+      timeoutMs?: number;
+      fetcher?: (url: string, options: { headers?: Record<string, string>; signal?: AbortSignal }) => Promise<unknown>;
     };
 
 export type DisplayPolicy = 'once-per-release' | 'always' | 'manual';
@@ -88,7 +102,9 @@ export type ShouldShowWhatsNewOptions = {
   displayPolicy?: DisplayPolicy;
   platform?: PlatformTarget;
   locale?: string;
+  fallbackLocale?: string;
   audience?: string | string[];
+  appVersion?: string | null;
 };
 
 export type ShouldShowWhatsNewResult = {
@@ -141,6 +157,7 @@ export type WhatsNewProviderProps = {
   storageKey?: string;
   displayPolicy?: DisplayPolicy;
   locale?: string;
+  fallbackLocale?: string;
   audience?: string | string[];
   onAutoShow?: WhatsNewAutoShowHandler;
   onActionPress?: WhatsNewActionHandler;
@@ -150,8 +167,11 @@ export type WhatsNewProviderProps = {
   theme?: WhatsNewTheme;
 };
 
+export type WhatsNewContentVariant = 'card' | 'event-sheet';
+
 export type WhatsNewContentProps = {
   doneLabel?: string;
   onDone?: () => void | Promise<void>;
   showDoneButton?: boolean;
+  variant?: WhatsNewContentVariant;
 };

@@ -76,7 +76,11 @@ function SettingsScreen() {
     type: 'remote',
     url: 'https://cdn.example.com/whats-new.json',
     cache: true,
+    cacheTtlMs: 1000 * 60 * 60,
+    timeoutMs: 8000,
   }}
+  locale="tr-TR"
+  fallbackLocale="en"
   autoShow
 >
   <Root />
@@ -84,7 +88,7 @@ function SettingsScreen() {
 </WhatsNewProvider>
 ```
 
-Remote payloads can be either an array:
+Remote payloads are validated at the package boundary before they reach the UI. They can be either an array:
 
 ```json
 [
@@ -100,6 +104,7 @@ or an object with a `releases` array:
 
 ```json
 {
+  "schemaVersion": 1,
   "releases": [
     {
       "version": "1.2.0",
@@ -109,6 +114,67 @@ or an object with a `releases` array:
   ]
 }
 ```
+
+For localized remote content, keep one release identity and put translated copy under `localizations`. This keeps acknowledgement state tied to the same release while allowing host apps to pass the active Expo locale.
+
+```json
+{
+  "schemaVersion": 1,
+  "releases": [
+    {
+      "id": "critical-alerts-intro",
+      "version": "2.1.0",
+      "kind": "policy",
+      "platform": ["ios"],
+      "features": [{ "title": "Sound the Alarm" }],
+      "acknowledgement": {
+        "mode": "accepted",
+        "required": true
+      },
+      "localizations": {
+        "en": {
+          "title": "Welcome to Critical Alerts",
+          "features": [
+            {
+              "title": "Sound the Alarm",
+              "description": "Mark a reminder as critical so an alarm plays when it is due."
+            }
+          ],
+          "acknowledgement": { "acceptLabel": "Continue" }
+        },
+        "tr": {
+          "title": "Acil Anımsatıcılar’a Hoş Geldiniz",
+          "features": [
+            {
+              "title": "Alarm Çalsın",
+              "description": "Bir anımsatıcıyı acil olarak işaretleyin."
+            }
+          ],
+          "acknowledgement": { "acceptLabel": "Sürdür" }
+        }
+      }
+    }
+  ]
+}
+```
+
+The core package does not depend on `expo-localization`. In Expo apps, resolve the locale in the host app and pass it in:
+
+```tsx
+import { getLocales } from 'expo-localization';
+
+const locale = getLocales()[0]?.languageTag ?? 'en-US';
+
+<WhatsNewProvider
+  source={{ type: 'remote', url: 'https://cdn.example.com/whats-new.json' }}
+  locale={locale}
+  fallbackLocale="en"
+>
+  <Root />
+</WhatsNewProvider>
+```
+
+Locale matching normalizes tags and falls back by language, so `tr-TR` can match a `tr` localization. Remote cache entries are stored with metadata (`schemaVersion`, `fetchedAt`, `expiresAt`, `releases`) and older array-only cache entries remain readable. If one URL returns different payloads for different headers or audiences, provide a stable `cacheKey`.
 
 ## Expo Router Native Modal Routes
 
@@ -185,6 +251,44 @@ For sheet-style presentation, configure the route in your app's stack:
   }}
 />
 ```
+
+For an Apple-style required event sheet with a fixed bottom Continue button, hide the native header and render the content with the `event-sheet` variant:
+
+```tsx
+<Stack.Screen
+  name="whats-new"
+  options={{
+    contentStyle: { backgroundColor: 'transparent' },
+    gestureEnabled: false,
+    headerShown: false,
+    presentation: 'formSheet',
+    sheetAllowedDetents: [0.92],
+    sheetGrabberVisible: false,
+    title: '',
+  }}
+/>
+```
+
+```tsx
+// app/whats-new.tsx
+import { router } from 'expo-router';
+import { WhatsNewScreen } from 'expo-whats-new';
+
+export default function WhatsNewRoute() {
+  return <WhatsNewScreen doneLabel="Continue" onDone={() => router.back()} variant="event-sheet" />;
+}
+```
+
+The package modal can use the same surface without Expo Router:
+
+```tsx
+<WhatsNewProvider releases={releases} autoShow>
+  <Root />
+  <WhatsNewModal variant="event-sheet" />
+</WhatsNewProvider>
+```
+
+Required `policy`, `consent`, or `acknowledgement.required` releases cannot be dismissed from the package modal by tapping the backdrop; they must be accepted through the primary action.
 
 ## Feature Actions
 

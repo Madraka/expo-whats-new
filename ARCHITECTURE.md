@@ -11,6 +11,7 @@ The package owns:
 - Release note schema and selection logic
 - Policy, consent, and acknowledgement events
 - Display policies such as once per release
+- Remote payload validation, cache envelopes, and localization hydration
 - Storage adapter contracts
 - React Provider and hook APIs
 - Default React Native UI components
@@ -22,6 +23,7 @@ The package does not own:
 
 - App analytics SDKs
 - Navigation libraries
+- Host locale discovery such as `expo-localization`
 - Expo Router route definitions
 - Legal copy authoring or compliance decisions
 - Remote config vendors
@@ -92,6 +94,21 @@ Native toolbar buttons are exposed as router-agnostic React components. Apps can
 <WhatsNewScreen showDoneButton={false} />
 ```
 
+Apple-style required event sheets use the same package state but keep the native presentation in the app route. The route owns `presentation: 'formSheet'`, detents, and gesture policy; the package owns the event surface, feature rows, acknowledgement CTA, and required-dismiss behavior for the package fallback modal:
+
+```tsx
+<Stack.Screen
+  name="whats-new"
+  options={{
+    headerShown: false,
+    gestureEnabled: false,
+    presentation: 'formSheet',
+    sheetAllowedDetents: [0.92],
+  }}
+/>
+<WhatsNewScreen variant="event-sheet" onDone={() => router.back()} />
+```
+
 Hook API:
 
 ```ts
@@ -157,11 +174,25 @@ Default behavior:
 - Expo Go: memory fallback when the custom native module is unavailable
 - Custom: user-provided adapter
 
+Remote cache entries use a metadata envelope:
+
+```ts
+type RemoteCacheEnvelope = {
+  schemaVersion: 1;
+  fetchedAt: string;
+  expiresAt?: string;
+  releases: WhatsNewRelease[];
+};
+```
+
+Older array-only cache entries are still readable. When a remote URL returns different release JSON by locale, audience, or authorization headers, the host app should provide `source.cacheKey` so cached payloads cannot cross streams.
+
 ## Release Schema
 
 ```ts
 export type WhatsNewRelease = {
   version: string;
+  id?: string;
   title?: string;
   subtitle?: string;
   date?: string;
@@ -170,10 +201,13 @@ export type WhatsNewRelease = {
   maxAppVersion?: string;
   platform?: PlatformTarget[];
   locale?: string | string[];
+  localizations?: Record<string, WhatsNewReleaseLocalization>;
   audience?: string | string[];
   metadata?: Record<string, unknown>;
 };
 ```
+
+Remote JSON is validated before use. `localizations` are hydrated after payload resolution and before release targeting. Locale matching normalizes BCP-47 tags and falls back by language, so a host-provided `tr-TR` locale can use a `tr` localization. The package does not import `expo-localization`; Expo apps pass `locale` and `fallbackLocale` into the provider.
 
 ## Delivery Phases
 

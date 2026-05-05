@@ -1,4 +1,5 @@
 import type { PlatformTarget, WhatsNewRelease } from '../ExpoWhatsNew.types';
+import { matchesLocale } from './locale';
 import { compareVersions } from './versionComparator';
 
 function includesTarget(value: string | string[] | undefined, target: string | string[] | undefined) {
@@ -17,6 +18,7 @@ export function matchesReleaseTarget(
   options: {
     platform?: PlatformTarget;
     locale?: string;
+    fallbackLocale?: string;
     audience?: string | string[];
     appVersion?: string | null;
   }
@@ -25,7 +27,7 @@ export function matchesReleaseTarget(
     return false;
   }
 
-  if (!includesTarget(release.locale, options.locale)) {
+  if (!matchesLocale(release.locale, options.locale, options.fallbackLocale)) {
     return false;
   }
 

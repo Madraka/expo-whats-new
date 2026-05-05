@@ -16,4 +16,32 @@ describe('resolveCurrentRelease', () => {
 
     expect(release?.version).toBe('1.0.0');
   });
+
+  it('matches locale by language fallback', () => {
+    const release = resolveCurrentRelease(
+      [
+        { version: '1.0.0', locale: 'en', features: [{ title: 'English' }] },
+        { version: '1.1.0', locale: 'tr', features: [{ title: 'Turkish' }] },
+      ],
+      {
+        locale: 'tr-TR',
+      }
+    );
+
+    expect(release?.version).toBe('1.1.0');
+  });
+
+  it('filters releases by app version', () => {
+    const release = resolveCurrentRelease(
+      [
+        { version: '1.0.0', maxAppVersion: '1.9.9', features: [{ title: 'Old app' }] },
+        { version: '2.0.0', minAppVersion: '2.0.0', features: [{ title: 'New app' }] },
+      ],
+      {
+        appVersion: '1.5.0',
+      }
+    );
+
+    expect(release?.version).toBe('1.0.0');
+  });
 });

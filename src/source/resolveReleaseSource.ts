@@ -1,4 +1,10 @@
 import type { WhatsNewRelease, WhatsNewReleaseSource, WhatsNewStorageAdapter } from '../ExpoWhatsNew.types';
+import { localizeRelease } from '../logic/locale';
+import {
+  formatRemoteReleaseIssues,
+  remoteReleaseCacheEnvelopeSchema,
+  remoteReleasePayloadSchema,
+} from './remoteReleaseSchema';
 
 export const DEFAULT_REMOTE_CACHE_KEY_PREFIX = 'expo-whats-new:remote-cache';
 
@@ -7,37 +13,73 @@ type ResolveReleaseSourceOptions = {
   releases?: WhatsNewRelease[];
   storage?: WhatsNewStorageAdapter;
   storageKeyPrefix?: string;
+  locale?: string;
+  fallbackLocale?: string;
 };
 
 function parseRemotePayload(payload: unknown): WhatsNewRelease[] {
-  if (Array.isArray(payload)) {
-    return payload as WhatsNewRelease[];
+  const result = remoteReleasePayloadSchema.safeParse(payload);
+
+  if (!result.success) {
+    throw new Error(`Invalid remote whats-new payload: ${formatRemoteReleaseIssues(result.error)}`);
   }
 
-  if (
-    payload &&
-    typeof payload === 'object' &&
-    'releases' in payload &&
-    Array.isArray((payload as { releases?: unknown }).releases)
-  ) {
-    return (payload as { releases: WhatsNewRelease[] }).releases;
-  }
-
-  throw new Error('Remote whats-new source must be an array or an object with a releases array.');
+  return Array.isArray(result.data) ? result.data : result.data.releases;
 }
 
 async function fetchRemotePayload(source: Extract<WhatsNewReleaseSource, { type: 'remote' }>) {
+  const controller = typeof AbortController !== 'undefined' && source.timeoutMs ? new AbortController() : null;
+  const timeout = controller ? setTimeout(() => controller.abort(), source.timeoutMs) : null;
+
   if (source.fetcher) {
-    return source.fetcher(source.url, { headers: source.headers });
+    try {
+      return await source.fetcher(source.url, { headers: source.headers, signal: controller?.signal });
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    }
   }
 
-  const response = await fetch(source.url, { headers: source.headers });
+  try {
+    const response = await fetch(source.url, { headers: source.headers, signal: controller?.signal });
 
-  if (!response.ok) {
-    throw new Error(`Failed to load whats-new releases from ${source.url}: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load whats-new releases from ${source.url}: ${response.status}`);
+    }
+
+    return response.json();
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+function applyLocalization(releases: WhatsNewRelease[], locale?: string, fallbackLocale?: string) {
+  return releases.map((release) => localizeRelease(release, locale, fallbackLocale));
+}
+
+function createCacheEnvelope(releases: WhatsNewRelease[], cacheTtlMs?: number) {
+  const fetchedAt = new Date();
+
+  return {
+    schemaVersion: 1 as const,
+    fetchedAt: fetchedAt.toISOString(),
+    expiresAt: cacheTtlMs ? new Date(fetchedAt.getTime() + cacheTtlMs).toISOString() : undefined,
+    releases,
+  };
+}
+
+function parseCachedReleases(value: string): WhatsNewRelease[] {
+  const parsed = JSON.parse(value) as unknown;
+  const envelope = remoteReleaseCacheEnvelopeSchema.safeParse(parsed);
+
+  if (envelope.success) {
+    return envelope.data.releases;
   }
 
-  return response.json();
+  return parseRemotePayload(parsed);
 }
 
 export async function resolveReleaseSource({
@@ -45,32 +87,34 @@ export async function resolveReleaseSource({
   releases,
   storage,
   storageKeyPrefix = DEFAULT_REMOTE_CACHE_KEY_PREFIX,
+  locale,
+  fallbackLocale,
 }: ResolveReleaseSourceOptions): Promise<WhatsNewRelease[]> {
   if (!source) {
-    return releases ?? [];
+    return applyLocalization(releases ?? [], locale, fallbackLocale);
   }
 
   if (source.type === 'static') {
-    return source.releases;
+    return applyLocalization(source.releases, locale, fallbackLocale);
   }
 
-  const cacheKey = `${storageKeyPrefix}:${source.url}`;
+  const cacheKey = `${storageKeyPrefix}:${source.cacheKey ?? source.url}`;
 
   try {
     const payload = await fetchRemotePayload(source);
     const remoteReleases = parseRemotePayload(payload);
 
     if (source.cache !== false && storage) {
-      await storage.setItem(cacheKey, JSON.stringify(remoteReleases));
+      await storage.setItem(cacheKey, JSON.stringify(createCacheEnvelope(remoteReleases, source.cacheTtlMs)));
     }
 
-    return remoteReleases;
+    return applyLocalization(remoteReleases, locale, fallbackLocale);
   } catch (error) {
     if (source.cache !== false && storage) {
       const cachedValue = await storage.getItem(cacheKey);
 
       if (cachedValue) {
-        return JSON.parse(cachedValue) as WhatsNewRelease[];
+        return applyLocalization(parseCachedReleases(cachedValue), locale, fallbackLocale);
       }
     }
 

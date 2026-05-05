@@ -10,6 +10,10 @@ export function getAcknowledgementMode(release: WhatsNewRelease) {
   return release.acknowledgement?.mode ?? (release.kind === 'policy' || release.kind === 'consent' ? 'accepted' : 'seen');
 }
 
+export function isRequiredRelease(release: WhatsNewRelease) {
+  return release.acknowledgement?.required === true || release.kind === 'policy' || release.kind === 'consent';
+}
+
 export function getAcceptLabel(release: WhatsNewRelease, fallback: string) {
   return release.acknowledgement?.acceptLabel ?? (getAcknowledgementMode(release) === 'accepted' ? 'Continue' : fallback);
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 
+import ExpoWhatsNewModule from '../ExpoWhatsNewModule';
 import type { WhatsNewFeature, WhatsNewProviderProps, WhatsNewRelease } from '../ExpoWhatsNew.types';
 import { resolveFeatureAction } from '../logic/resolveFeatureAction';
 import { DEFAULT_STORAGE_KEY, shouldShowWhatsNew } from '../logic/shouldShowWhatsNew';
@@ -19,6 +20,7 @@ export function WhatsNewProvider({
   storageKey = DEFAULT_STORAGE_KEY,
   displayPolicy = 'once-per-release',
   locale,
+  fallbackLocale,
   audience,
   onAutoShow,
   onActionPress: handleActionPress,
@@ -35,7 +37,10 @@ export function WhatsNewProvider({
   const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
 
   const resolveState = useCallback(async () => {
-    const resolvedReleases = await resolveReleaseSource({ source, releases, storage });
+    const [resolvedReleases, appInfo] = await Promise.all([
+      resolveReleaseSource({ source, releases, storage, locale, fallbackLocale }),
+      ExpoWhatsNewModule.getAppInfo().catch(() => null),
+    ]);
 
     return shouldShowWhatsNew({
       releases: resolvedReleases,
@@ -43,10 +48,12 @@ export function WhatsNewProvider({
       storageKey,
       displayPolicy,
       locale,
+      fallbackLocale,
       audience,
-      platform: Platform.OS === 'web' ? 'web' : Platform.OS === 'android' ? 'android' : 'ios',
+      appVersion: appInfo?.version ?? null,
+      platform: appInfo?.platform ?? (Platform.OS === 'web' ? 'web' : Platform.OS === 'android' ? 'android' : 'ios'),
     });
-  }, [audience, displayPolicy, locale, releases, source, storage, storageKey]);
+  }, [audience, displayPolicy, fallbackLocale, locale, releases, source, storage, storageKey]);
 
   const refresh = useCallback(async () => {
     setStatus('loading');

@@ -7,6 +7,7 @@ export function resolveCurrentRelease(
   options: {
     platform?: PlatformTarget;
     locale?: string;
+    fallbackLocale?: string;
     audience?: string | string[];
     appVersion?: string | null;
   } = {}
