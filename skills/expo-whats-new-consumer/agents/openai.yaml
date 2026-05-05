@@ -1,0 +1,6 @@
+interface:
+  display_name: "expo-whats-new Consumer"
+  short_description: "Integrate release sheets into Expo apps"
+  default_prompt: "Use $expo-whats-new-consumer to integrate expo-whats-new into this Expo app."
+policy:
+  allow_implicit_invocation: true

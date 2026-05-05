@@ -1,0 +1,6 @@
+interface:
+  display_name: "expo-whats-new Maintainer"
+  short_description: "Maintain package boundaries and examples"
+  default_prompt: "Use $expo-whats-new-maintainer to modify the expo-whats-new package safely."
+policy:
+  allow_implicit_invocation: true

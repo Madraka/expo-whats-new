@@ -10,6 +10,30 @@ The package is JS-first and Expo Module compatible. It can run with a graceful J
 npm install expo-whats-new
 ```
 
+## Optional Codex Skills
+
+The package ships optional agent skills under `skills/`. They are not installed automatically and are not part of the runtime API.
+
+```sh
+npm run skills:install
+```
+
+Use a custom target when your agent runtime reads another skills directory:
+
+```sh
+npm run skills:install -- --target "$HOME/.agents/skills"
+```
+
+Claude Code can use the repository-level `CLAUDE.md` directly as project memory, so it does not need the skills install step.
+
+These skills help agents keep the package boundaries clear: core owns validation, acknowledgement, cache, localization fallback, and composable UI contracts; host apps own native sheets, icons, media renderers, locale detection, analytics, and Supabase/SQLite clients.
+
+Validate the bundled skill package before publishing or changing agent guidance:
+
+```sh
+npm run skills:validate
+```
+
 ## Usage
 
 ```tsx

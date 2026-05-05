@@ -23,6 +23,8 @@
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
     "expo-module": "expo-module",
+    "skills:install": "bash scripts/install-codex-skills.sh",
+    "skills:validate": "bash scripts/validate-codex-skills.sh",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android"
   },
