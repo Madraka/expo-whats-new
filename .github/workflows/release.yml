@@ -78,7 +78,11 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           git add package.json package-lock.json android/build.gradle
-          git commit -m "chore(release): v${{ steps.version.outputs.version }}"
+          if git diff --cached --quiet; then
+            echo "Version files already match v${{ steps.version.outputs.version }}; skipping release commit."
+          else
+            git commit -m "chore(release): v${{ steps.version.outputs.version }}"
+          fi
           git tag "${{ steps.version.outputs.tag }}"
 
       - name: Publish dry run

@@ -11,16 +11,20 @@ VERSION_ARG="$1"
 
 cd "$ROOT_DIR"
 
+CURRENT_VERSION="$(node -p "require('./package.json').version")"
+
 if [[ "$VERSION_ARG" == "patch" ]]; then
-  :
+  npm version patch --no-git-tag-version
 elif [[ "$VERSION_ARG" =~ ^0\.1\.[0-9]+$ ]]; then
-  :
+  if [[ "$VERSION_ARG" == "$CURRENT_VERSION" ]]; then
+    echo "Version is already $VERSION_ARG; syncing native metadata only."
+  else
+    npm version "$VERSION_ARG" --no-git-tag-version
+  fi
 else
   echo "Release versions are locked to 0.1.x. Use 'patch' for the next patch or an exact 0.1.x version." >&2
   exit 1
 fi
-
-npm version "$VERSION_ARG" --no-git-tag-version
 
 VERSION="$(node -p "require('./package.json').version")"
 
