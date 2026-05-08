@@ -1,11 +1,35 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View, type ModalProps } from 'react-native';
 
 import type { WhatsNewContentProps } from '../ExpoWhatsNew.types';
 import { isRequiredRelease } from '../storage/acknowledgementStorage';
 import { WhatsNewInline } from './WhatsNewInline';
 import { useWhatsNew } from './useWhatsNew';
 
-export function WhatsNewModal({ variant = 'card', ...props }: WhatsNewContentProps) {
+export type WhatsNewModalProps = WhatsNewContentProps &
+  Pick<
+    ModalProps,
+    | 'allowSwipeDismissal'
+    | 'hardwareAccelerated'
+    | 'navigationBarTranslucent'
+    | 'onDismiss'
+    | 'onShow'
+    | 'presentationStyle'
+    | 'statusBarTranslucent'
+    | 'supportedOrientations'
+  >;
+
+export function WhatsNewModal({
+  allowSwipeDismissal = false,
+  hardwareAccelerated = true,
+  navigationBarTranslucent,
+  onDismiss,
+  onShow,
+  presentationStyle = 'overFullScreen',
+  statusBarTranslucent,
+  supportedOrientations,
+  variant = 'card',
+  ...props
+}: WhatsNewModalProps) {
   const { currentRelease, visible, hide, theme } = useWhatsNew();
   const isEventSheet = variant === 'event-sheet';
   const canDismiss = currentRelease ? !isRequiredRelease(currentRelease) : true;
@@ -18,7 +42,20 @@ export function WhatsNewModal({ variant = 'card', ...props }: WhatsNewContentPro
   }
 
   return (
-    <Modal animationType={isEventSheet ? 'slide' : 'fade'} transparent visible={visible} onRequestClose={handleRequestClose}>
+    <Modal
+      allowSwipeDismissal={canDismiss && allowSwipeDismissal}
+      animationType={isEventSheet ? 'slide' : 'fade'}
+      hardwareAccelerated={hardwareAccelerated}
+      navigationBarTranslucent={navigationBarTranslucent}
+      onDismiss={onDismiss}
+      onRequestClose={handleRequestClose}
+      onShow={onShow}
+      presentationStyle={presentationStyle}
+      statusBarTranslucent={statusBarTranslucent}
+      supportedOrientations={supportedOrientations}
+      transparent
+      visible={visible}
+    >
       <View style={[styles.backdrop, isEventSheet ? styles.eventBackdrop : styles.cardBackdrop, { backgroundColor: theme.colors.backdrop }]}>
         {canDismiss ? (
           <Pressable
@@ -29,6 +66,7 @@ export function WhatsNewModal({ variant = 'card', ...props }: WhatsNewContentPro
           />
         ) : null}
         <View
+          accessible
           accessibilityLabel={title}
           accessibilityViewIsModal
           importantForAccessibility="yes"

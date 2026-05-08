@@ -2,7 +2,11 @@ import { Stack } from 'expo-router';
 import { getLocales } from 'expo-localization';
 import { WhatsNewProvider } from 'expo-whats-new';
 
-import { ScenarioProvider, useScenario } from './scenario-context';
+import { ScenarioProvider, useScenario } from '../lib/scenario-context';
+
+export const unstable_settings = {
+  anchor: '(tabs)',
+};
 
 export default function RootLayout() {
   return (
@@ -65,11 +69,9 @@ function WhatsNewRuntime() {
           name="whats-new"
           options={{
             contentStyle: { backgroundColor: 'transparent' },
-            gestureEnabled: false,
             headerShown: false,
             presentation: 'formSheet',
             sheetAllowedDetents: [0.92],
-            sheetGrabberVisible: false,
             title: '',
           }}
         />

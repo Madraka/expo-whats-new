@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Link, Stack, router } from 'expo-router';
 import { ExpoWhatsNew, useWhatsNew, type AppInfo } from 'expo-whats-new';
 
-import { useScenario } from '../scenario-context';
+import { openWhatsNewSheet } from '../../lib/whats-new-route';
+import { useScenario } from '../../lib/scenario-context';
 
 export default function GalleryRoute() {
   const { currentRelease, error, hasUnseenRelease, refresh, reset, status } = useWhatsNew();
@@ -66,7 +67,7 @@ export default function GalleryRoute() {
       </View>
 
       <View style={styles.commandPanel}>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/whats-new')} style={styles.primaryAction}>
+        <Pressable accessibilityRole="button" onPress={openWhatsNewSheet} style={styles.primaryAction}>
           <Text style={styles.primaryActionText}>Present current event</Text>
         </Pressable>
         <View style={styles.secondaryActions}>

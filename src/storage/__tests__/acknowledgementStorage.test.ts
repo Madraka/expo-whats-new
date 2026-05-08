@@ -1,11 +1,25 @@
 import { createMemoryStorage } from '../memoryStorage';
 import {
+  isRequiredRelease,
   isReleaseAcknowledged,
   parseStoredAcknowledgement,
   setReleaseAcknowledgement,
 } from '../acknowledgementStorage';
 
 describe('acknowledgementStorage', () => {
+  it('treats required acknowledgements, policy, and consent releases as required', () => {
+    expect(isRequiredRelease({ version: '1.0.0', features: [{ title: 'Standard' }] })).toBe(false);
+    expect(
+      isRequiredRelease({
+        version: '1.0.1',
+        acknowledgement: { required: true },
+        features: [{ title: 'Required' }],
+      })
+    ).toBe(true);
+    expect(isRequiredRelease({ kind: 'policy', version: 'terms-2026', features: [{ title: 'Terms' }] })).toBe(true);
+    expect(isRequiredRelease({ kind: 'consent', version: 'consent-2026', features: [{ title: 'Consent' }] })).toBe(true);
+  });
+
   it('stores release id alongside version for stable acknowledgement identity', async () => {
     const storage = createMemoryStorage();
 

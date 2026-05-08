@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+No unreleased changes.
+
+## 0.1.3 - 2026-05-08
+
+### Changed
+
+- Hardened Expo Router native sheet examples with route anchors, duplicate-open guards, and failure-safe route presentation.
+- Exported `isRequiredRelease` so host apps can align native sheet gesture dismissal with required `policy`, `consent`, and acknowledgement flows.
+- Improved `event-sheet` layout so header and release content share one vertical scroll flow while the CTA footer remains fixed.
+- Allowed optional native sheet gesture dismissal in the example app while keeping required releases non-dismissible and marking optional gesture dismissals as seen.
+- Expanded React, web, and example route tests for event-sheet layout, required fallback modal dismissal, decline completion, guarded sheet routing, web module storage, web release targeting, and web fallback modal dismissal.
+- Added cross-platform fallbacks for example SF Symbol media/icons so Android and web examples do not depend on Apple-only symbol rendering.
+
 ## 0.1.2
 
 ### Changed

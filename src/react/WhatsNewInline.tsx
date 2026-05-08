@@ -11,6 +11,8 @@ import type {
 import { getAcceptLabel, getAcknowledgementMode } from '../storage/acknowledgementStorage';
 import { useWhatsNew } from './useWhatsNew';
 
+const EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER = 1.15;
+
 export function WhatsNewInline({
   doneLabel = 'Done',
   onDone,
@@ -42,22 +44,114 @@ export function WhatsNewInline({
 
   async function handleDecline() {
     await decline();
+    await onDone?.();
+  }
+
+  const header = (
+    <View style={[styles.header, isEventSheet ? styles.eventHeader : null]}>
+      <Text
+        maxFontSizeMultiplier={isEventSheet ? EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER : undefined}
+        style={[styles.title, isEventSheet ? styles.eventTitle : null, { color: theme.colors.text }]}
+      >
+        {release.title ?? "What's New"}
+      </Text>
+      {release.subtitle ? (
+        <Text
+          maxFontSizeMultiplier={isEventSheet ? EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER : undefined}
+          style={[styles.subtitle, isEventSheet ? styles.eventSubtitle : null, { color: theme.colors.muted }]}
+        >
+          {release.subtitle}
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  const featureRows = release.features.map((feature, index) => (
+    <FeatureRow
+      key={`${release.version}-${feature.title}-${index}`}
+      feature={feature}
+      index={index}
+      release={release}
+      renderMedia={renderMedia}
+      variant={variant}
+      onActionPress={() => {
+        void onActionPress(feature);
+      }}
+    />
+  ));
+
+  const guidePages = guideSteps.map((step, index) => (
+    <GuideStep
+      key={`${release.version}-${step.title}-${index}`}
+      index={index}
+      release={release}
+      renderMedia={renderMedia}
+      pageWidth={guidePageWidth}
+      step={step}
+      total={guideSteps.length}
+    />
+  ));
+
+  const footer = showDoneButton ? (
+    <View style={[styles.footer, isEventSheet ? styles.eventFooter : null]}>
+      {release.acknowledgement?.declineLabel ? (
+        <Pressable accessibilityRole="button" onPress={handleDecline} style={styles.secondaryButton}>
+          <Text style={[styles.secondaryButtonText, { color: theme.colors.muted }]}>{release.acknowledgement.declineLabel}</Text>
+        </Pressable>
+      ) : null}
+      <Pressable
+        accessibilityRole="button"
+        onPress={handleDone}
+        style={[
+          styles.primaryButton,
+          isEventSheet ? styles.eventPrimaryButton : null,
+          { backgroundColor: theme.colors.primary, borderRadius: isEventSheet ? 999 : theme.radius.md },
+        ]}
+      >
+        <Text style={[styles.primaryButtonText, isEventSheet ? styles.eventPrimaryButtonText : null]}>{getAcceptLabel(release, doneLabel)}</Text>
+      </Pressable>
+    </View>
+  ) : null;
+
+  if (isEventSheet) {
+    return (
+      <View style={[styles.container, styles.eventContainer, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
+        <ScrollView
+          style={styles.eventContentScroll}
+          contentContainerStyle={styles.eventContent}
+          contentInsetAdjustmentBehavior="never"
+          showsVerticalScrollIndicator={false}
+        >
+          {header}
+          {presentation === 'guide' ? (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={styles.eventGuidePager}
+              contentContainerStyle={styles.eventGuideContent}
+              contentInsetAdjustmentBehavior="never"
+            >
+              {guidePages}
+            </ScrollView>
+          ) : (
+            <View style={styles.eventFeaturesContent}>{featureRows}</View>
+          )}
+        </ScrollView>
+        {footer}
+      </View>
+    );
   }
 
   return (
     <View
       style={[
         styles.container,
-        isEventSheet ? styles.eventContainer : styles.cardContainer,
+        styles.cardContainer,
         { backgroundColor: theme.colors.background, borderColor: theme.colors.border },
       ]}
     >
-      <View style={[styles.header, isEventSheet ? styles.eventHeader : null]}>
-        <Text style={[styles.title, isEventSheet ? styles.eventTitle : null, { color: theme.colors.text }]}>{release.title ?? "What's New"}</Text>
-        {release.subtitle ? (
-          <Text style={[styles.subtitle, isEventSheet ? styles.eventSubtitle : null, { color: theme.colors.muted }]}>{release.subtitle}</Text>
-        ) : null}
-      </View>
+      {header}
 
       {presentation === 'guide' ? (
         <ScrollView
@@ -68,17 +162,7 @@ export function WhatsNewInline({
           contentContainerStyle={[styles.guideContent, isEventSheet ? styles.eventGuideContent : null]}
           contentInsetAdjustmentBehavior="automatic"
         >
-          {guideSteps.map((step, index) => (
-            <GuideStep
-              key={`${release.version}-${step.title}-${index}`}
-              index={index}
-              release={release}
-              renderMedia={renderMedia}
-              pageWidth={guidePageWidth}
-              step={step}
-              total={guideSteps.length}
-            />
-          ))}
+          {guidePages}
         </ScrollView>
       ) : (
         <ScrollView
@@ -86,44 +170,11 @@ export function WhatsNewInline({
           contentContainerStyle={[styles.featuresContent, isEventSheet ? styles.eventFeaturesContent : null]}
           contentInsetAdjustmentBehavior="automatic"
         >
-          {release.features.map((feature, index) => (
-            <FeatureRow
-              key={`${release.version}-${feature.title}-${index}`}
-              feature={feature}
-              index={index}
-              release={release}
-              renderMedia={renderMedia}
-              variant={variant}
-              onActionPress={() => {
-                void onActionPress(feature);
-              }}
-            />
-          ))}
+          {featureRows}
         </ScrollView>
       )}
 
-      {showDoneButton ? (
-        <View style={[styles.footer, isEventSheet ? styles.eventFooter : null]}>
-          {release.acknowledgement?.declineLabel ? (
-            <Pressable accessibilityRole="button" onPress={handleDecline} style={styles.secondaryButton}>
-              <Text style={[styles.secondaryButtonText, { color: theme.colors.muted }]}>
-                {release.acknowledgement.declineLabel}
-              </Text>
-            </Pressable>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleDone}
-            style={[
-              styles.primaryButton,
-              isEventSheet ? styles.eventPrimaryButton : null,
-              { backgroundColor: theme.colors.primary, borderRadius: isEventSheet ? 999 : theme.radius.md },
-            ]}
-          >
-            <Text style={[styles.primaryButtonText, isEventSheet ? styles.eventPrimaryButtonText : null]}>{getAcceptLabel(release, doneLabel)}</Text>
-          </Pressable>
-        </View>
-      ) : null}
+      {footer}
     </View>
   );
 }
@@ -155,7 +206,13 @@ function FeatureRow({
   return (
     <View style={[styles.feature, isEventSheet ? styles.eventFeature : null]}>
       {icon}
-      <View style={[styles.featureBody, isEventSheet && !icon ? styles.eventFeatureBodyWithoutIcon : null]}>
+      <View
+        style={[
+          styles.featureBody,
+          isEventSheet ? styles.eventFeatureBody : null,
+          isEventSheet && !icon ? styles.eventFeatureBodyWithoutIcon : null,
+        ]}
+      >
         {feature.media || feature.image ? (
           <MediaFrame
             media={feature.media ?? { type: 'image', url: feature.image }}
@@ -163,9 +220,17 @@ function FeatureRow({
             context={{ kind: 'feature', feature, release, index }}
           />
         ) : null}
-        <Text style={[styles.featureTitle, isEventSheet ? styles.eventFeatureTitle : null, { color: theme.colors.text }]}>{feature.title}</Text>
+        <Text
+          maxFontSizeMultiplier={isEventSheet ? EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER : undefined}
+          style={[styles.featureTitle, isEventSheet ? styles.eventFeatureTitle : null, { color: theme.colors.text }]}
+        >
+          {feature.title}
+        </Text>
         {feature.description ? (
-          <Text style={[styles.featureDescription, isEventSheet ? styles.eventFeatureDescription : null, { color: theme.colors.muted }]}>
+          <Text
+            maxFontSizeMultiplier={isEventSheet ? EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER : undefined}
+            style={[styles.featureDescription, isEventSheet ? styles.eventFeatureDescription : null, { color: theme.colors.muted }]}
+          >
             {feature.description}
           </Text>
         ) : null}
@@ -201,8 +266,17 @@ function GuideStep({
     <View style={[styles.guideStep, { width: pageWidth }]}>
       {media ? <MediaFrame context={{ kind: 'step', step, release, index }} media={media} renderMedia={renderMedia} /> : null}
       <View style={styles.guideText}>
-        <Text style={[styles.eventFeatureTitle, { color: theme.colors.text }]}>{step.title}</Text>
-        {step.description ? <Text style={[styles.eventFeatureDescription, { color: theme.colors.muted }]}>{step.description}</Text> : null}
+        <Text maxFontSizeMultiplier={EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER} style={[styles.eventFeatureTitle, { color: theme.colors.text }]}>
+          {step.title}
+        </Text>
+        {step.description ? (
+          <Text
+            maxFontSizeMultiplier={EVENT_TEXT_MAX_FONT_SIZE_MULTIPLIER}
+            style={[styles.eventFeatureDescription, { color: theme.colors.muted }]}
+          >
+            {step.description}
+          </Text>
+        ) : null}
       </View>
       <View accessibilityLabel={`Step ${index + 1} of ${total}`} style={styles.stepIndicators}>
         {Array.from({ length: total }).map((_, itemIndex) => (
@@ -275,14 +349,23 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 0,
   },
+  eventContentScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  eventContent: {
+    paddingBottom: 28,
+  },
   header: {
     padding: 20,
     paddingBottom: 8,
   },
   eventHeader: {
+    flexShrink: 0,
+    gap: 14,
     paddingHorizontal: 32,
-    paddingTop: 76,
-    paddingBottom: 28,
+    paddingTop: 64,
+    paddingBottom: 24,
   },
   title: {
     fontSize: 24,
@@ -291,7 +374,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 34,
     fontWeight: '800',
-    lineHeight: 40,
+    lineHeight: 44,
   },
   subtitle: {
     fontSize: 15,
@@ -300,15 +383,17 @@ const styles = StyleSheet.create({
   },
   eventSubtitle: {
     fontSize: 20,
-    lineHeight: 27,
-    marginTop: 12,
+    lineHeight: 30,
+    marginTop: 0,
   },
   features: {
     maxHeight: 360,
   },
   eventFeatures: {
     flex: 1,
+    flexShrink: 1,
     maxHeight: undefined,
+    minHeight: 0,
   },
   featuresContent: {
     paddingHorizontal: 20,
@@ -327,12 +412,15 @@ const styles = StyleSheet.create({
   eventGuideContent: {
     paddingBottom: 28,
   },
+  eventGuidePager: {
+    width: '100%',
+  },
   guideStep: {
     gap: 18,
     paddingHorizontal: 32,
   },
   guideText: {
-    gap: 4,
+    gap: 10,
   },
   mediaFrame: {
     width: '100%',
@@ -390,6 +478,9 @@ const styles = StyleSheet.create({
   featureBody: {
     flex: 1,
   },
+  eventFeatureBody: {
+    gap: 8,
+  },
   eventFeatureBodyWithoutIcon: {
     paddingLeft: 0,
   },
@@ -398,9 +489,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   eventFeatureTitle: {
-    fontSize: 23,
+    fontSize: 22,
     fontWeight: '700',
-    lineHeight: 29,
+    lineHeight: 30,
   },
   featureDescription: {
     fontSize: 14,
@@ -408,9 +499,9 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   eventFeatureDescription: {
-    fontSize: 22,
-    lineHeight: 28,
-    marginTop: 2,
+    fontSize: 20,
+    lineHeight: 29,
+    marginTop: 0,
   },
   actionButton: {
     alignSelf: 'flex-start',

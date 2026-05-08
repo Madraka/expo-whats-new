@@ -1,8 +1,8 @@
 import { createElement } from 'react';
-import { Image } from 'expo-image';
-import { StyleSheet } from 'react-native';
 
 import type { DisplayPolicy, WhatsNewRelease, WhatsNewReleaseSource } from 'expo-whats-new';
+
+import { ExampleSymbolIcon } from './symbol-icon';
 
 export type ExampleScenario = {
   id: string;
@@ -14,18 +14,11 @@ export type ExampleScenario = {
   source?: WhatsNewReleaseSource;
 };
 
-const styles = StyleSheet.create({
-  symbol: {
-    height: 56,
-    width: 56,
-  },
-});
-
-function symbol(name: string) {
-  return createElement(Image, {
-    source: `sf:${name}`,
-    style: styles.symbol,
-    tintColor: '#0a84ff',
+function symbol(name: string, fallback: string) {
+  return createElement(ExampleSymbolIcon, {
+    fallback,
+    name,
+    size: 56,
   });
 }
 
@@ -38,17 +31,17 @@ const whatsNewReleases: WhatsNewRelease[] = [
       {
         title: 'Native modal sheet',
         description: 'Presented with Expo Router native-stack formSheet presentation.',
-        icon: symbol('rectangle.bottomthird.inset.filled'),
+        icon: symbol('rectangle.bottomthird.inset.filled', 'MOD'),
       },
       {
         title: 'Toolbar action',
         description: 'The Continue button lives in the native header instead of inside the content.',
-        icon: symbol('button.programmable'),
+        icon: symbol('button.programmable', 'CTA'),
       },
       {
         title: 'Durable acknowledgement',
         description: 'Seen state is persisted through platform storage where native modules are available.',
-        icon: symbol('checkmark.seal.fill'),
+        icon: symbol('checkmark.seal.fill', 'OK'),
       },
     ],
   },
@@ -70,12 +63,12 @@ const policyReleases: WhatsNewRelease[] = [
       {
         title: 'Account terms',
         description: 'We clarified account ownership and service availability language.',
-        icon: symbol('doc.text.fill'),
+        icon: symbol('doc.text.fill', 'DOC'),
       },
       {
         title: 'Privacy language',
         description: 'We improved wording around diagnostics, support logs, and optional analytics.',
-        icon: symbol('lock.shield.fill'),
+        icon: symbol('lock.shield.fill', 'SEC'),
       },
     ],
   },
@@ -97,12 +90,12 @@ const consentReleases: WhatsNewRelease[] = [
       {
         title: 'Optional analytics',
         description: 'Usage signals help us find crashes, slow screens, and confusing flows.',
-        icon: symbol('chart.bar.xaxis'),
+        icon: symbol('chart.bar.xaxis', 'AN'),
       },
       {
         title: 'No personal content',
         description: 'Event payloads should never include messages, documents, or private user content.',
-        icon: symbol('person.crop.circle.badge.checkmark'),
+        icon: symbol('person.crop.circle.badge.checkmark', 'ID'),
       },
     ],
   },
@@ -172,7 +165,7 @@ const actionReleases: WhatsNewRelease[] = [
       {
         title: 'Open documentation',
         description: 'URL actions are handled through React Native Linking.',
-        icon: symbol('safari.fill'),
+        icon: symbol('safari.fill', 'URL'),
         action: {
           label: 'Open Expo docs',
           url: 'https://docs.expo.dev',
@@ -181,7 +174,7 @@ const actionReleases: WhatsNewRelease[] = [
       {
         title: 'Navigate inside the app',
         description: 'Screen actions are passed to the app through onActionPress.',
-        icon: symbol('arrow.turn.up.right'),
+        icon: symbol('arrow.turn.up.right', 'GO'),
         action: {
           label: 'Open custom screen',
           screen: '/details',
@@ -204,12 +197,12 @@ const announcementReleases: WhatsNewRelease[] = [
       {
         title: 'Maintenance window',
         description: 'Some services may be unavailable between 02:00 and 03:00 UTC.',
-        icon: symbol('clock.fill'),
+        icon: symbol('clock.fill', '2H'),
       },
       {
         title: 'No user action required',
         description: 'The event is acknowledged as seen after the user taps Done.',
-        icon: symbol('checkmark.circle.fill'),
+        icon: symbol('checkmark.circle.fill', 'OK'),
       },
     ],
   },
@@ -344,7 +337,7 @@ export const scenarios: ExampleScenario[] = [
           {
             title: 'No automatic prompt',
             description: 'The sheet opens only when the app navigates to the route.',
-            icon: symbol('hand.tap.fill'),
+            icon: symbol('hand.tap.fill', 'TAP'),
           },
         ],
       },

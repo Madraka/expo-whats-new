@@ -276,15 +276,20 @@ Remote JSON should send media descriptors such as `assetId`, not arbitrary React
 The package does not depend on Expo Router. Keep navigation in your app and use `onAutoShow` to route an unseen release into a native-stack modal or sheet.
 
 ```tsx
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 import { WhatsNewProvider } from 'expo-whats-new';
+import { openWhatsNewSheet } from '../lib/whats-new-route';
+
+export const unstable_settings = {
+  anchor: 'index',
+};
 
 export default function Layout() {
   return (
     <WhatsNewProvider
       releases={releases}
       autoShow
-      onAutoShow={() => router.push('/whats-new')}
+      onAutoShow={openWhatsNewSheet}
     >
       <Stack>
         <Stack.Screen name="index" />
@@ -301,13 +306,56 @@ export default function Layout() {
 }
 ```
 
+Use an anchor for modal routes that can be opened from a deep link. Without an anchor, the modal can replace the background route and lose navigation context.
+
 ```tsx
 // app/whats-new.tsx
+import { useEffect } from 'react';
 import { WhatsNewScreen } from 'expo-whats-new';
 import { router } from 'expo-router';
+import { markWhatsNewSheetDismissed, markWhatsNewSheetPresented } from '../lib/whats-new-route';
 
 export default function WhatsNewRoute() {
+  useEffect(() => {
+    markWhatsNewSheetPresented();
+
+    return markWhatsNewSheetDismissed;
+  }, []);
+
   return <WhatsNewScreen onDone={() => router.back()} />;
+}
+```
+
+Guard manual opens in the host app so rapid taps or repeated automatic triggers do not stack duplicate sheets:
+
+```ts
+// lib/whats-new-route.ts
+import { router } from 'expo-router';
+
+let isWhatsNewSheetPresented = false;
+
+export function openWhatsNewSheet() {
+  if (isWhatsNewSheetPresented) {
+    return false;
+  }
+
+  isWhatsNewSheetPresented = true;
+
+  try {
+    router.push('/whats-new');
+    return true;
+  } catch (error) {
+    isWhatsNewSheetPresented = false;
+    throw error;
+  }
+}
+
+export function markWhatsNewSheetPresented() {
+  isWhatsNewSheetPresented = true;
+}
+
+export function markWhatsNewSheetDismissed() {
+  isWhatsNewSheetPresented = false;
 }
 ```
 
@@ -347,18 +395,16 @@ For sheet-style presentation, configure the route in your app's stack:
 />
 ```
 
-For an Apple-style required event sheet with a fixed bottom Continue button, hide the native header and render the content with the `event-sheet` variant:
+For an Apple-style event sheet with a fixed bottom Continue button, hide the native header and render the content with the `event-sheet` variant. Use `isRequiredRelease` when your route needs to keep required `policy`, `consent`, or acknowledgement events non-dismissible while allowing optional release notes to use native swipe dismissal:
 
 ```tsx
 <Stack.Screen
   name="whats-new"
   options={{
     contentStyle: { backgroundColor: 'transparent' },
-    gestureEnabled: false,
     headerShown: false,
     presentation: 'formSheet',
     sheetAllowedDetents: [0.92],
-    sheetGrabberVisible: false,
     title: '',
   }}
 />
@@ -366,24 +412,44 @@ For an Apple-style required event sheet with a fixed bottom Continue button, hid
 
 ```tsx
 // app/whats-new.tsx
-import { router } from 'expo-router';
-import { WhatsNewScreen } from 'expo-whats-new';
+import { Stack, router } from 'expo-router';
+import { WhatsNewScreen, isRequiredRelease, useWhatsNew } from 'expo-whats-new';
 
 export default function WhatsNewRoute() {
-  return <WhatsNewScreen doneLabel="Continue" onDone={() => router.back()} variant="event-sheet" />;
+  const { currentRelease } = useWhatsNew();
+  const canGestureDismiss = currentRelease ? !isRequiredRelease(currentRelease) : true;
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          gestureEnabled: canGestureDismiss,
+          sheetGrabberVisible: canGestureDismiss,
+        }}
+      />
+      <WhatsNewScreen doneLabel="Continue" onDone={() => router.back()} variant="event-sheet" />
+    </>
+  );
 }
 ```
+
+When optional sheets allow native gesture dismissal, decide whether dismissal means "seen" in your product. The example app treats optional gesture dismissal as seen while keeping required releases non-dismissible; CTA completion still uses `WhatsNewScreen`'s acknowledgement flow.
+
+The `event-sheet` surface keeps its title, subtitle, and release content inside one vertical scroll flow, with only the bottom CTA area fixed. Do not wrap it in another vertical `ScrollView`; let the route own native sheet presentation while the package owns the sheet's internal scroll layout.
+
+`WhatsNewScreen` does not own app safe-area policy. In a native-stack route, use the stack header, `contentInsetAdjustmentBehavior`, or an app-level `react-native-safe-area-context` wrapper where your app needs explicit insets.
 
 The package modal can use the same surface without Expo Router:
 
 ```tsx
 <WhatsNewProvider releases={releases} autoShow>
   <Root />
-  <WhatsNewModal variant="event-sheet" />
+  <WhatsNewModal hardwareAccelerated statusBarTranslucent variant="event-sheet" />
 </WhatsNewProvider>
 ```
 
 Required `policy`, `consent`, or `acknowledgement.required` releases cannot be dismissed from the package modal by tapping the backdrop; they must be accepted through the primary action.
+The fallback modal also keeps `allowSwipeDismissal` disabled for required releases, even if the host enables swipe dismissal for optional releases.
 
 ## Feature Actions
 
@@ -512,6 +578,7 @@ In Expo Go, custom native modules are not available unless they are included in 
 By default:
 
 - Web uses `localStorage` with a memory fallback. If `localStorage` is unavailable, blocked, sandboxed, over quota, or throws during access, the adapter falls back to memory storage instead of breaking the release flow.
+- The package fallback `WhatsNewModal` also works on Expo web through React Native Web. Required releases keep backdrop and swipe dismissal disabled; optional releases can be dismissed by the fallback backdrop when the host uses the package modal instead of an app-owned route.
 - Native development builds and bare apps use platform storage:
   - iOS: `UserDefaults`
   - Android: `SharedPreferences`

@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useWhatsNew } from 'expo-whats-new';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAutoPresentScenario } from '../auto-present';
-import { findScenario, useScenario } from '../scenario-context';
+import { useAutoPresentScenario } from '../../lib/auto-present';
+import { findScenario, useScenario } from '../../lib/scenario-context';
+import { openWhatsNewSheet } from '../../lib/whats-new-route';
 
 export default function ScenarioRoute() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -56,7 +57,7 @@ export default function ScenarioRoute() {
           <Pressable
             accessibilityRole="button"
             disabled={!isActiveScenario}
-            onPress={() => router.push('/whats-new')}
+            onPress={openWhatsNewSheet}
             style={StyleSheet.flatten([styles.primaryAction, !isActiveScenario ? styles.disabledAction : null])}
           >
             <Text style={styles.primaryActionText}>Present sheet manually</Text>

@@ -81,10 +81,12 @@ Primary React API:
 Router-integrated apps should keep navigation in the app layer:
 
 ```tsx
-<WhatsNewProvider autoShow onAutoShow={() => router.push('/whats-new')}>
+<WhatsNewProvider autoShow onAutoShow={openWhatsNewSheet}>
   <Stack />
 </WhatsNewProvider>
 ```
+
+Modal routes that can be opened from a deep link should define an Expo Router anchor in the owning layout. Host apps should also guard manual `router.push('/whats-new')` calls so repeated taps do not stack duplicate native sheets.
 
 Native toolbar buttons are exposed as router-agnostic React components. Apps can mount them in Expo Router `headerRight`, React Navigation `headerRight`, or any native-stack equivalent:
 
@@ -104,13 +106,30 @@ Apple-style required event sheets use the same package state but keep the native
   name="whats-new"
   options={{
     headerShown: false,
-    gestureEnabled: false,
     presentation: 'formSheet',
     sheetAllowedDetents: [0.92],
   }}
 />
-<WhatsNewScreen variant="event-sheet" onDone={() => router.back()} />
+
+function WhatsNewRoute() {
+  const { currentRelease } = useWhatsNew();
+  const canGestureDismiss = currentRelease ? !isRequiredRelease(currentRelease) : true;
+
+  return (
+    <>
+      <Stack.Screen options={{ gestureEnabled: canGestureDismiss, sheetGrabberVisible: canGestureDismiss }} />
+      <WhatsNewScreen variant="event-sheet" onDone={() => router.back()} />
+    </>
+  );
+}
 ```
+
+`isRequiredRelease` is exported so host apps can apply the same required-flow rule to native route gestures that the package fallback modal applies to backdrop and swipe dismissal.
+If a host app enables gesture dismissal for optional sheets, it should explicitly decide whether route unmount counts as seen; the example app marks optional gesture-dismissed sheets as seen and leaves required sheets gated by their CTA.
+
+The event-sheet layout keeps header and release content in a single package-owned vertical scroll flow, with the CTA footer outside that scroll. This avoids native sheet inset or offset changes causing feature rows to render over the title area.
+
+`WhatsNewScreen` is intentionally safe-area agnostic. Host apps own native headers, route content insets, and any `react-native-safe-area-context` wrappers required by their layout.
 
 Hook API:
 
@@ -237,7 +256,7 @@ Feature URL actions are guarded by allowed URL schemes before they reach React N
 - Provider, hook, modal, screen, inline, event-sheet, guide, and headless APIs
 - URL scheme guarding for feature actions
 - Native storage through UserDefaults and SharedPreferences, web storage with resilient memory fallback
-- Focused logic/source/storage/react unit tests and an Expo Doctor-clean example app
+- Focused logic/source/storage/react/web unit tests and an Expo Doctor-clean example app
 
 ### v0.2 Product
 

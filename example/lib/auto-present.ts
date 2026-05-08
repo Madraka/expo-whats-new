@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { router } from 'expo-router';
 import { useWhatsNew } from 'expo-whats-new';
+
+import { openWhatsNewSheet } from './whats-new-route';
 
 export function useAutoPresentScenario(enabled: boolean, identity: string) {
   const { currentRelease, hasUnseenRelease, status } = useWhatsNew();
@@ -18,6 +19,6 @@ export function useAutoPresentScenario(enabled: boolean, identity: string) {
     }
 
     promptedIdentity.current = promptIdentity;
-    router.push('/whats-new');
+    openWhatsNewSheet();
   }, [currentRelease, enabled, hasUnseenRelease, identity, status]);
 }

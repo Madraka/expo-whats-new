@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { WhatsNewContentProps } from '../ExpoWhatsNew.types';
 import { WhatsNewInline } from './WhatsNewInline';
@@ -9,11 +9,11 @@ export function WhatsNewScreen({ variant = 'card', ...props }: WhatsNewContentPr
   const isEventSheet = variant === 'event-sheet';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
       <View style={[styles.content, isEventSheet ? styles.eventContent : null]}>
         <WhatsNewInline {...props} variant={variant} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

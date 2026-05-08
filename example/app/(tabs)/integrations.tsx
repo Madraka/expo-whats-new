@@ -1,8 +1,9 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link, Stack, router } from 'expo-router';
+import { Link, Stack } from 'expo-router';
 import { useWhatsNew } from 'expo-whats-new';
 
-import { useScenario } from '../scenario-context';
+import { openWhatsNewSheet } from '../../lib/whats-new-route';
+import { useScenario } from '../../lib/scenario-context';
 
 const capabilities = [
   ['Remote JSON', 'Validated payloads, cache policies, localized copy, and stale fallback.'],
@@ -51,7 +52,7 @@ export default function IntegrationsRoute() {
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>All examples</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/whats-new')}>
+        <Pressable accessibilityRole="button" onPress={openWhatsNewSheet}>
           <Text style={styles.linkText}>Present</Text>
         </Pressable>
       </View>
