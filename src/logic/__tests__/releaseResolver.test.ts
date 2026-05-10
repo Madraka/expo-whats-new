@@ -31,6 +31,21 @@ describe('resolveCurrentRelease', () => {
     expect(release?.version).toBe('1.0.0');
   });
 
+  it('lets host-owned experiment providers select same-version variants by audience', () => {
+    const release = resolveCurrentRelease(
+      [
+        { id: 'onboarding-a', version: '2.0.0', audience: 'variant-a', features: [{ title: 'Short copy' }] },
+        { id: 'onboarding-b', version: '2.0.0', audience: 'variant-b', features: [{ title: 'Guided copy' }] },
+      ],
+      {
+        audience: 'variant-b',
+      }
+    );
+
+    expect(release?.id).toBe('onboarding-b');
+    expect(release?.features[0]?.title).toBe('Guided copy');
+  });
+
   it('matches locale by language fallback', () => {
     const release = resolveCurrentRelease(
       [

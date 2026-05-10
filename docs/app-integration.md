@@ -221,6 +221,64 @@ Remote releases do not have to come from HTTP. Use `type: 'custom'` for Supabase
 
 For SQLite, return the stored JSON object or `{ releases }` from the loader. The package intentionally does not import Supabase or SQLite clients.
 
+## A/B Testing And Experiment Providers
+
+`expo-whats-new` is experiment-ready, but it is not an A/B testing platform. Keep bucket assignment, analytics SDKs, conversion reporting, and remote-config providers in the host app. Pass the resolved experiment variant into `audience`, return the matching release payload through a static, remote, or custom source, and include the variant in `cacheKey` when one backend URL can return different payloads.
+
+This keeps the package deterministic while letting apps use PostHog, GrowthBook, LaunchDarkly, Firebase Remote Config, Supabase, or an in-house provider without adding those dependencies to the package core.
+
+```tsx
+const variant = experimentProvider.getVariant('new-onboarding-copy');
+
+<WhatsNewProvider
+  audience={variant}
+  source={{
+    type: 'custom',
+    key: 'experiments:new-onboarding-copy',
+    cache: true,
+    cacheKey: `new-onboarding-copy:${user.id}:${variant}`,
+    loader: async () => experimentProvider.loadWhatsNewPayload('new-onboarding-copy'),
+  }}
+  analytics={{
+    onShow: (release) => analytics.track('whats_new_shown', { releaseId: release.id, variant }),
+    onAccept: (release) => analytics.track('whats_new_accepted', { releaseId: release.id, variant }),
+    onActionPress: (feature, release) =>
+      analytics.track('whats_new_action_pressed', {
+        action: feature.action?.label,
+        releaseId: release.id,
+        variant,
+      }),
+  }}
+>
+  <Root />
+</WhatsNewProvider>
+```
+
+Variant releases should use stable `id` values even when they share the same app `version`. Acknowledgement identity is `release.id ?? release.version`, so one variant can be marked seen without accidentally hiding another same-version variant.
+
+```json
+{
+  "releases": [
+    {
+      "id": "new-onboarding-a",
+      "version": "2.0.0",
+      "audience": "variant-a",
+      "title": "Discover the new workspace",
+      "features": [{ "title": "Short copy" }]
+    },
+    {
+      "id": "new-onboarding-b",
+      "version": "2.0.0",
+      "audience": "variant-b",
+      "title": "Set up your new workspace",
+      "features": [{ "title": "Guided copy" }]
+    }
+  ]
+}
+```
+
+Avoid experiments for required policy, consent, legal, security, or App Store review-critical screens. Those flows should stay explicit and stable.
+
 ## Interactive Guides And Media
 
 Use `presentation: 'guide'` for step-based onboarding, Telegram-style walkthroughs, and rich feature education. The core package only owns the structure and acknowledgement flow. Animation renderers such as Lottie, Rive, video, or custom native views stay in the host app through `renderMedia`.
