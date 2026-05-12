@@ -9,11 +9,13 @@ public class ExpoWhatsNewModule: Module {
       let version = infoDictionary?["CFBundleShortVersionString"] as? String
       let buildNumber = infoDictionary?["CFBundleVersion"] as? String
 
-      return [
+      let appInfo: [String: Any] = [
         "platform": "ios",
-        "version": version ?? NSNull(),
-        "buildNumber": buildNumber ?? NSNull()
+        "version": nullableString(version),
+        "buildNumber": nullableString(buildNumber)
       ]
+
+      return appInfo
     }
 
     AsyncFunction("getItemAsync") { (key: String) in
@@ -27,5 +29,13 @@ public class ExpoWhatsNewModule: Module {
     AsyncFunction("removeItemAsync") { (key: String) in
       UserDefaults.standard.removeObject(forKey: key)
     }
+  }
+
+  private func nullableString(_ value: String?) -> Any {
+    guard let value else {
+      return NSNull()
+    }
+
+    return value
   }
 }

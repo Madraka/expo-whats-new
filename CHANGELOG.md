@@ -4,6 +4,16 @@
 
 No unreleased changes.
 
+## 0.1.4 - 2026-05-12
+
+### Fixed
+
+- Fixed an iOS native build failure in `ExpoWhatsNewModule.getAppInfo()` when app version metadata is unavailable. The module now returns a typed app info dictionary that can safely carry `null` values for `version` and `buildNumber` without Swift inferring an incompatible string-only dictionary.
+
+### Notes
+
+- Android native app info behavior is unchanged in this release.
+
 ## 0.1.3 - 2026-05-08
 
 ### Changed
