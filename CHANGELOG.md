@@ -4,6 +4,14 @@
 
 No unreleased changes.
 
+## 0.1.5 - 2026-05-14
+
+### Fixed
+
+- Fixed Android native compilation on Expo SDK 55 by resolving the module application context through the React context.
+- Updated the example app to Expo SDK 55 patch-compatible dependencies and registered the `expo-localization` config plugin.
+- Verified Android release APK generation for the example app after aligning the local native template and Hermes compiler configuration.
+
 ## 0.1.4 - 2026-05-12
 
 ### Fixed

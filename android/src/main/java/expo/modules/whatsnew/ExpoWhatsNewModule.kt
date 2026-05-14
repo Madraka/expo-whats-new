@@ -11,9 +11,9 @@ class ExpoWhatsNewModule : Module() {
     Name("ExpoWhatsNew")
 
     AsyncFunction("getAppInfo") {
-      val context = appContext.reactContext ?: appContext.applicationContext
-      val packageName = context?.packageName
-      val packageInfo = packageName?.let {
+      val context = applicationContext()
+      val packageName = context.packageName
+      val packageInfo = packageName.let {
         context.packageManager.getPackageInfo(it, 0)
       }
       val buildNumber = packageInfo?.let {
@@ -46,6 +46,10 @@ class ExpoWhatsNewModule : Module() {
   }
 
   private fun preferences() =
-    requireNotNull(appContext.reactContext ?: appContext.applicationContext)
-      .getSharedPreferences(preferencesName, 0)
+    applicationContext().getSharedPreferences(preferencesName, 0)
+
+  private fun applicationContext() =
+    requireNotNull(appContext.reactContext) {
+      "React context is unavailable for ExpoWhatsNewModule."
+    }.applicationContext
 }
